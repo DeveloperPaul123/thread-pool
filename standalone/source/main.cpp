@@ -1,5 +1,4 @@
-#include <greeter/greeter.h>
-#include <greeter/version.h>
+#include <thread_pool/thread_pool.h>
 
 #include <cxxopts.hpp>
 #include <iostream>
@@ -7,13 +6,6 @@
 #include <unordered_map>
 
 auto main(int argc, char** argv) -> int {
-  const std::unordered_map<std::string, greeter::LanguageCode> languages{
-      {"en", greeter::LanguageCode::EN},
-      {"de", greeter::LanguageCode::DE},
-      {"es", greeter::LanguageCode::ES},
-      {"fr", greeter::LanguageCode::FR},
-  };
-
   cxxopts::Options options(*argv, "A program to welcome the world!");
 
   std::string language;
@@ -30,24 +22,12 @@ auto main(int argc, char** argv) -> int {
 
   auto result = options.parse(argc, argv);
 
-  if (result["help"].as<bool>()) {
-    std::cout << options.help() << std::endl;
-    return 0;
-  }
-
-  if (result["version"].as<bool>()) {
-    std::cout << "Greeter, version " << GREETER_VERSION << std::endl;
-    return 0;
-  }
-
-  auto langIt = languages.find(language);
-  if (langIt == languages.end()) {
-    std::cerr << "unknown language code: " << language << std::endl;
-    return 1;
-  }
-
-  greeter::Greeter greeter(name);
-  std::cout << greeter.greet(langIt->second) << std::endl;
-
+  dp::thread_pool pool();
+  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
+  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
+  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
+  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
+  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
+  
   return 0;
 }
