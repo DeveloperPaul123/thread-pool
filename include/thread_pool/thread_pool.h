@@ -2,14 +2,15 @@
 
 #include <concepts>
 #include <future>
+#include <memory>
 #include <queue>
 #include <semaphore>
 #include <thread>
+#include <type_traits>
 
 namespace dp {
 
   namespace detail {
-    // See: https://en.cppreference.com/w/cpp/thread/thread/thread
     template <class T> std::decay_t<T> decay_copy(T &&v) { return std::forward<T>(v); }
 
     // Bind F and args... into a nullary one-shot lambda. Lambda captures by value.
@@ -19,20 +20,50 @@ namespace dp {
         return std::invoke(std::move(f), std::move(args)...);
       };
     }
+
+    template <typename Function>
+    requires std::invocable<Function>
+    class task_wrapper {
+    public:
+      task_wrapper(Function &&function) : function_(std::move(function)) {}
+
+      void operator()() && {
+        try {
+          if constexpr (std::is_same_v<void, std::invoke_result_t<Function>>) {
+            std::invoke(std::move(function_));
+            result_promise_.set_value();
+          } else {
+            result_promise_.set_value(std::invoke(std::move(function_)));
+          }
+        } catch (...) {
+          result_promise_.set_exception(std::current_exception());
+        }
+      }
+
+      [[nodiscard]] std::future<std::invoke_result_t<Function>> get_future() {
+        return result_promise_.get_future();
+      }
+
+    private:
+      Function function_;
+      std::promise<std::invoke_result_t<Function>> result_promise_;
+    };
   }  // namespace detail
 
   class thread_pool {
   public:
-    thread_pool(const unsigned int &number_of_threads = std::thread::hardware_concurrency())
-        : queues_(number_of_threads) {
-      // TODO
+    thread_pool(const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
       for (std::size_t i = 0; i < number_of_threads; ++i) {
+        queues_.push_back(std::make_unique<task_pair>());
         threads_.emplace_back([&, id = i](std::stop_token stop_tok) {
           do {
-            auto &pair = queues_[i];
-            pair.semaphore.acquire();
-            auto &task = pair.tasks.front();
-            pair.tasks.pop();
+            // TODO: Check if this is correct
+            if (queues_.empty()) {
+              break;
+            }
+            queues_[id]->semaphore.acquire();
+            auto &task = queues_[id]->tasks.front();
+            queues_[id]->tasks.pop();
             std::invoke(std::move(task));
           } while (!stop_tok.stop_requested());
         });
@@ -43,8 +74,8 @@ namespace dp {
       for (auto &thread : threads_) {
         thread.request_stop();
       }
-      for (auto &[semaphore, _] : queues_) {
-        semaphore.release();
+      for (auto &pair : queues_) {
+        pair->semaphore.release();
       }
     }
 
@@ -52,14 +83,15 @@ namespace dp {
               typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
     requires std::invocable<Function, Args...>
     [[nodiscard]] std::future<ReturnType> enqueue(Function &&f, Args &&...args) {
-      std::packaged_task<ReturnType()> task(std::bind(
-          [func = std::forward<Function>(f)](auto &&...args) -> ReturnType {
-            return std::move(func)(decltype(args)(args)...);
-          },
-          std::forward<Args>(args)...));
-      auto future = task.get_future();
+      auto shared_promise = std::make_shared<std::promise<ReturnType>>();
 
-      enqueue_task([t = std::move(task)]() { t(); });
+      auto task = [&, shared_promise]() {
+        std::invoke(std::forward<Function>(f), std::forward<Args>(args)...);
+      };
+
+      auto future = shared_promise->get_future();
+
+      enqueue_task(std::move(task));
       return future;
     }
 
@@ -70,10 +102,10 @@ namespace dp {
     }
 
   private:
-    using semaphore_type = std::counting_semaphore<4>;
+    using semaphore_type = std::binary_semaphore;
     struct task_pair {
       semaphore_type semaphore{0};
-      std::queue<std::function<void()>> tasks;
+      std::queue<std::function<void()>> tasks{};
     };
 
     template <typename Function>
@@ -81,12 +113,12 @@ namespace dp {
     void enqueue_task(Function &&f) {
       const std::size_t i = count_++ % queues_.size();
 
-      queues_[i].tasks.push(std::forward<Function>(f));
-      queues_[i].semaphore.release();
+      queues_[i]->tasks.push(std::forward<Function>(f));
+      queues_[i]->semaphore.release();
     }
 
     std::vector<std::jthread> threads_;
-    std::vector<task_pair> queues_;
+    std::vector<std::unique_ptr<task_pair>> queues_;
     std::size_t count_ = 0;
   };
 }  // namespace dp
