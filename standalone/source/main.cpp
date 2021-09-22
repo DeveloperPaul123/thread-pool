@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <thread>
 
 auto main(int argc, char** argv) -> int {
   cxxopts::Options options(*argv, "A program to welcome the world!");
@@ -22,12 +23,13 @@ auto main(int argc, char** argv) -> int {
 
   auto result = options.parse(argc, argv);
 
-  dp::thread_pool pool();
-  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
-  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
-  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
-  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
-  pool.enqueue_detach([](){ std::cout << "Hi" << std::endl;});
-  
+  dp::thread_pool pool(4);
+  pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
+  pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
+  pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
+  pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
+ 
+  // TODO: Wait for pool to finish
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   return 0;
 }
