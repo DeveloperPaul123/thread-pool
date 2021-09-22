@@ -3,7 +3,6 @@
 #include <cxxopts.hpp>
 #include <iostream>
 #include <string>
-#include <unordered_map>
 #include <thread>
 
 auto main(int argc, char** argv) -> int {
@@ -28,8 +27,5 @@ auto main(int argc, char** argv) -> int {
   pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
   pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
   pool.enqueue_detach([]() { std::cout << "Hi from " << std::this_thread::get_id() << std::endl; });
- 
-  // TODO: Wait for pool to finish
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   return 0;
 }
