@@ -8,6 +8,8 @@
 #include <thread>
 #include <type_traits>
 
+#include "thread_pool/safe_queue.h"
+
 namespace dp {
 
   namespace detail {
@@ -57,25 +59,27 @@ namespace dp {
         queues_.push_back(std::make_unique<task_pair>());
         threads_.emplace_back([&, id = i](std::stop_token stop_tok) {
           do {
-            // TODO: Check if this is correct
-            if (queues_.empty()) {
-              break;
-            }
             queues_[id]->semaphore.acquire();
-            auto &task = queues_[id]->tasks.front();
-            queues_[id]->tasks.pop();
-            std::invoke(std::move(task));
+            if (!queues_[id]->tasks.empty()) {
+              auto &task = queues_[id]->tasks.front();
+              pending_tasks_.fetch_sub(1, std::memory_order_release);
+              // invoke task before popping
+              std::invoke(std::move(task));
+              queues_[id]->tasks.pop();
+            }
           } while (!stop_tok.stop_requested());
         });
       }
     }
 
     ~thread_pool() {
-      for (auto &thread : threads_) {
-        thread.request_stop();
+      // wait for tasks to complete
+      while (pending_tasks_.load(std::memory_order_acquire) > 0) {
+  
       }
-      for (auto &pair : queues_) {
-        pair->semaphore.release();
+      for (std::size_t i = 0; i < threads_.size(); ++i) {
+        threads_[i].request_stop();
+        queues_[i]->semaphore.release();
       }
     }
 
@@ -103,9 +107,11 @@ namespace dp {
 
   private:
     using semaphore_type = std::binary_semaphore;
+    using task_type = std::function<void()>;
+    using task_list = dp::safe_queue<task_type>;
     struct task_pair {
       semaphore_type semaphore{0};
-      std::queue<std::function<void()>> tasks{};
+      task_list tasks{};
     };
 
     template <typename Function>
@@ -113,12 +119,14 @@ namespace dp {
     void enqueue_task(Function &&f) {
       const std::size_t i = count_++ % queues_.size();
 
+      pending_tasks_.fetch_add(1, std::memory_order_relaxed);
       queues_[i]->tasks.push(std::forward<Function>(f));
       queues_[i]->semaphore.release();
     }
 
     std::vector<std::jthread> threads_;
     std::vector<std::unique_ptr<task_pair>> queues_;
+    std::atomic<std::int64_t> pending_tasks_;
     std::size_t count_ = 0;
   };
 }  // namespace dp
