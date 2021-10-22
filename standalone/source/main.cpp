@@ -17,7 +17,7 @@ auto main(int argc, char** argv) -> int {
     ("h,help", "Show help")
     ("v,version", "Print the current version number")
     ("w,width", "Image width", cxxopts::value(image_width)->default_value("1080"))
-    ("h,height", "Image height", cxxopts::value(image_height)->default_value("1920"))
+    ("y,height", "Image height", cxxopts::value(image_height)->default_value("1920"))
   ;
   // clang-format on
 
