@@ -8,6 +8,8 @@
 #include <thread>
 #include <type_traits>
 
+#include "thread_pool/safe_queue.h"
+
 namespace dp {
 
   namespace detail {
@@ -50,32 +52,37 @@ namespace dp {
     };
   }  // namespace detail
 
-  class thread_pool {
+  template <template <class T> class Queue, typename FunctionType = std::function<void()>>
+  requires std::invocable<FunctionType> && std::is_same_v<void, std::invoke_result_t<FunctionType>>
+  class thread_pool_impl {
   public:
-    thread_pool(const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
+    thread_pool_impl(const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
       for (std::size_t i = 0; i < number_of_threads; ++i) {
         queues_.push_back(std::make_unique<task_pair>());
         threads_.emplace_back([&, id = i](std::stop_token stop_tok) {
           do {
-            // TODO: Check if this is correct
-            if (queues_.empty()) {
-              break;
+            // check if we have task
+            if (queues_[id]->tasks.empty()) {
+              queues_[id]->semaphore.acquire();
             }
-            queues_[id]->semaphore.acquire();
-            auto &task = queues_[id]->tasks.front();
-            queues_[id]->tasks.pop();
-            std::invoke(std::move(task));
+
+            // ensure we have a task before getting task
+            // since the dtor releases the semaphore as well
+            if (!queues_[id]->tasks.empty()) {
+              auto &task = queues_[id]->tasks.front();
+              std::invoke(std::move(task));
+              queues_[id]->tasks.pop();
+            }
           } while (!stop_tok.stop_requested());
         });
       }
     }
 
-    ~thread_pool() {
-      for (auto &thread : threads_) {
-        thread.request_stop();
-      }
-      for (auto &pair : queues_) {
-        pair->semaphore.release();
+    ~thread_pool_impl() {
+      for (auto i = 0; i < threads_.size(); ++i) {
+        threads_[i].request_stop();
+        queues_[i]->semaphore.release();
+        threads_[i].join();
       }
     }
 
@@ -86,11 +93,11 @@ namespace dp {
       auto shared_promise = std::make_shared<std::promise<ReturnType>>();
 
       auto task = [&, shared_promise]() {
-        std::invoke(std::forward<Function>(f), std::forward<Args>(args)...);
+        shared_promise->set_value(
+            std::invoke(std::forward<Function>(f), std::forward<Args>(args)...));
       };
 
       auto future = shared_promise->get_future();
-
       enqueue_task(std::move(task));
       return future;
     }
@@ -103,14 +110,13 @@ namespace dp {
 
   private:
     using semaphore_type = std::binary_semaphore;
+    using task_type = FunctionType;
     struct task_pair {
       semaphore_type semaphore{0};
-      std::queue<std::function<void()>> tasks{};
+      Queue<task_type> tasks{};
     };
 
-    template <typename Function>
-
-    void enqueue_task(Function &&f) {
+    template <typename Function> void enqueue_task(Function &&f) {
       const std::size_t i = count_++ % queues_.size();
 
       queues_[i]->tasks.push(std::forward<Function>(f));
@@ -121,4 +127,6 @@ namespace dp {
     std::vector<std::unique_ptr<task_pair>> queues_;
     std::size_t count_ = 0;
   };
+
+  using thread_pool = thread_pool_impl<dp::safe_queue>;
 }  // namespace dp
