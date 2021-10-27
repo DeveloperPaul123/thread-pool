@@ -10,7 +10,7 @@ namespace dp {
     safe_queue() = default;
     void push(T&& value) {
       std::lock_guard lock(mutex_);
-      data_.push(value);
+      data_.push(std::forward<T>(value));
       condition_variable_.notify_one();
     }
     bool empty() {

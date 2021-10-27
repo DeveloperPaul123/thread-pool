@@ -22,34 +22,6 @@ namespace dp {
         return std::invoke(std::move(f), std::move(args)...);
       };
     }
-
-    template <typename Function>
-    requires std::invocable<Function>
-    class task_wrapper {
-    public:
-      task_wrapper(Function &&function) : function_(std::move(function)) {}
-
-      void operator()() && {
-        try {
-          if constexpr (std::is_same_v<void, std::invoke_result_t<Function>>) {
-            std::invoke(std::move(function_));
-            result_promise_.set_value();
-          } else {
-            result_promise_.set_value(std::invoke(std::move(function_)));
-          }
-        } catch (...) {
-          result_promise_.set_exception(std::current_exception());
-        }
-      }
-
-      [[nodiscard]] std::future<std::invoke_result_t<Function>> get_future() {
-        return result_promise_.get_future();
-      }
-
-    private:
-      Function function_;
-      std::promise<std::invoke_result_t<Function>> result_promise_;
-    };
   }  // namespace detail
 
   template <template <class T> class Queue, typename FunctionType = std::function<void()>>
@@ -90,14 +62,17 @@ namespace dp {
               typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
     requires std::invocable<Function, Args...>
     [[nodiscard]] std::future<ReturnType> enqueue(Function &&f, Args &&...args) {
+      // use shared promise here so that we don't break the promise later
       auto shared_promise = std::make_shared<std::promise<ReturnType>>();
-
-      auto task = [&, shared_promise]() {
-        shared_promise->set_value(
-            std::invoke(std::forward<Function>(f), std::forward<Args>(args)...));
-      };
-
+      // here we move arguments into a tuple since we cannot do an init-capture followed by an
+      // ellipsis doing arguments = std::move(args)... would be better here, but currently not
+      // possible. see: http://eel.is/c++draft/expr.prim.lambda#capture-17.sentence-2 see:
+      // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0780r1.html
+      auto task = [func = std::move(f), tup = std::make_tuple(std::move(args)...),
+                   promise = shared_promise]() { promise->set_value(std::apply(func, tup)); };
+      // get the future before enqueuing the task
       auto future = shared_promise->get_future();
+      // enqueue the task
       enqueue_task(std::move(task));
       return future;
     }
@@ -105,7 +80,7 @@ namespace dp {
     template <typename Function, typename... Args>
     requires std::invocable<Function, Args...>
     void enqueue_detach(Function &&func, Args &&...args) {
-      enqueue_task(std::bind(std::forward<Function>(func), std::forward<Args>(args)...));
+      enqueue_task(detail::bind(std::forward<Function>(func), std::forward<Args>(args)...));
     }
 
   private:
@@ -124,6 +99,7 @@ namespace dp {
     }
 
     std::vector<std::jthread> threads_;
+    // have to use unique_ptr here because std::binary_semaphore is not move/copy assignable/constructible
     std::vector<std::unique_ptr<task_pair>> queues_;
     std::size_t count_ = 0;
   };
