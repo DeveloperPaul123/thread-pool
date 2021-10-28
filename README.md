@@ -11,7 +11,7 @@ A simple, functional thread pool implementation using pure C++20.
 
 ## Features
 
-* Build entirely with C++20
+* Built entirely with C++20
 * Enqueue tasks with or without tracking results
 
 ## Usage
@@ -35,7 +35,7 @@ Use the following command to build and run the executable target.
 ```bash
 cmake -S standalone -B build/standalone
 cmake --build build/standalone
-./build/standalone/Greeter --help
+./build/standalone/ThreadPool --help
 ```
 
 ### Build and run test suite
