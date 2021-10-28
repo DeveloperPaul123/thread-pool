@@ -35,14 +35,18 @@ namespace dp {
           do {
             // check if we have task
             if (queues_[id]->tasks.empty()) {
+              // no tasks, so we wait instead of spinning
               queues_[id]->semaphore.acquire();
             }
 
             // ensure we have a task before getting task
             // since the dtor releases the semaphore as well
             if (!queues_[id]->tasks.empty()) {
+              // get the task
               auto &task = queues_[id]->tasks.front();
+              // invoke the task
               std::invoke(std::move(task));
+              // remove task from the queue
               queues_[id]->tasks.pop();
             }
           } while (!stop_tok.stop_requested());
@@ -51,6 +55,7 @@ namespace dp {
     }
 
     ~thread_pool_impl() {
+      // stop all threads
       for (auto i = 0; i < threads_.size(); ++i) {
         threads_[i].request_stop();
         queues_[i]->semaphore.release();
@@ -58,6 +63,15 @@ namespace dp {
       }
     }
 
+    /**
+     * @brief Enqueue a task into the thread pool that returns a result.
+     * @tparam Function An invocable type.
+     * @tparam ...Args Argument parameter pack
+     * @tparam ReturnType The return type of the Function
+     * @param f The callable function
+     * @param ...args The parameters that will be passed (copied) to the function.
+     * @return A std::future<ReturnType> that can be used to retrieve the returned value.
+     */
     template <typename Function, typename... Args,
               typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
     requires std::invocable<Function, Args...>
@@ -77,6 +91,13 @@ namespace dp {
       return future;
     }
 
+    /**
+     * @brief Enqueue a task to be executed in the thread pool that returns void.
+     * @tparam Function An invocable type.
+     * @tparam ...Args Argument parameter pack for Function
+     * @param func The callable to be executed
+     * @param ...args Arguments that wiill be passed to the function.
+     */
     template <typename Function, typename... Args>
     requires std::invocable<Function, Args...> && std::is_same_v<
         void, std::invoke_result_t<Function &&, Args &&...>>
@@ -100,7 +121,8 @@ namespace dp {
     }
 
     std::vector<std::jthread> threads_;
-    // have to use unique_ptr here because std::binary_semaphore is not move/copy assignable/constructible
+    // have to use unique_ptr here because std::binary_semaphore is not move/copy
+    // assignable/constructible
     std::vector<std::unique_ptr<task_pair>> queues_;
     std::size_t count_ = 0;
   };
