@@ -26,6 +26,14 @@ namespace dp {
       return data_.front();
     }
 
+    [[nodiscard]] T& back() {
+      std::unique_lock lock(mutex_);
+      while (data_.empty()) {
+        condition_variable_.wait(lock);
+      }
+      return data_.back();
+    }
+
     void pop() {
       std::lock_guard lock(mutex_);
       data_.pop();
@@ -34,7 +42,7 @@ namespace dp {
   private:
     using mutex_type = std::mutex;
     std::queue<T> data_;
-    mutable mutex_type mutex_;
-    std::condition_variable condition_variable_;
+    mutable mutex_type mutex_{};
+    std::condition_variable condition_variable_{};
   };
 }  // namespace dp

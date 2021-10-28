@@ -22,10 +22,22 @@ namespace dp {
         return std::invoke(std::move(f), std::move(args)...);
       };
     }
+
+    template <template <class T> class Queue, class U>
+    concept is_valid_queue = requires(Queue<U> q) {
+      { q.empty() } -> std::convertible_to<bool>;
+      { q.front() } -> std::convertible_to<U &>;
+      { q.back() } -> std::convertible_to<U &>;
+      q.pop();
+    };
+
+    static_assert(detail::is_valid_queue<std::queue, int>);
+    static_assert(detail::is_valid_queue<dp::safe_queue, int>);
   }  // namespace detail
 
   template <template <class T> class Queue, typename FunctionType = std::function<void()>>
-  requires std::invocable<FunctionType> && std::is_same_v<void, std::invoke_result_t<FunctionType>>
+  requires std::invocable<FunctionType> && std::is_same_v<
+      void, std::invoke_result_t<FunctionType>> && detail::is_valid_queue<Queue, FunctionType>
   class thread_pool_impl {
   public:
     thread_pool_impl(const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
