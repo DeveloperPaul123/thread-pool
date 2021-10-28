@@ -30,4 +30,3 @@ TEST_CASE("Ensure input params are properly passed") {
     CHECK(j == futures[j].get());
   }
 }
-
