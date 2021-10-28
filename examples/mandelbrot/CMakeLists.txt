@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-project(ThreadPoolStandalone LANGUAGES CXX)
+project(Mandelbrot LANGUAGES CXX)
 
 # --- Import tools ----
 
-include(../cmake/tools.cmake)
+include(../../cmake/tools.cmake)
 
 # ---- Dependencies ----
 
-include(../cmake/CPM.cmake)
+include(../../cmake/CPM.cmake)
 
 CPMAddPackage(
   GITHUB_REPOSITORY jarro2783/cxxopts
@@ -23,6 +23,6 @@ file(GLOB headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 add_executable(${PROJECT_NAME} ${headers} ${sources})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20 OUTPUT_NAME "ThreadPool")
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 target_link_libraries(${PROJECT_NAME} ThreadPool cxxopts)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

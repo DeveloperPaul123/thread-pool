@@ -69,4 +69,4 @@ packageProject(
 
 add_subdirectory(test)
 add_subdirectory(documentation)
-add_subdirectory(standalone)
+add_subdirectory(examples)
