@@ -78,7 +78,8 @@ namespace dp {
     }
 
     template <typename Function, typename... Args>
-    requires std::invocable<Function, Args...>
+    requires std::invocable<Function, Args...> && std::is_same_v<
+        void, std::invoke_result_t<Function &&, Args &&...>>
     void enqueue_detach(Function &&func, Args &&...args) {
       enqueue_task(detail::bind(std::forward<Function>(func), std::forward<Args>(args)...));
     }
