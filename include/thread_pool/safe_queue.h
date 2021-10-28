@@ -20,17 +20,13 @@ namespace dp {
 
     [[nodiscard]] T& front() {
       std::unique_lock lock(mutex_);
-      while (data_.empty()) {
-        condition_variable_.wait(lock);
-      }
+      condition_variable_.wait(lock, [this] { return !data_.empty(); });
       return data_.front();
     }
 
     [[nodiscard]] T& back() {
       std::unique_lock lock(mutex_);
-      while (data_.empty()) {
-        condition_variable_.wait(lock);
-      }
+      condition_variable_.wait(lock, [this] { return !data_.empty(); });
       return data_.back();
     }
 
