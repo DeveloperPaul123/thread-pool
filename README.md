@@ -1,10 +1,6 @@
 [![say thanks](https://img.shields.io/badge/Say%20Thanks-👍-1EAEDB.svg)](https://github.com/DeveloperPaul123/periodic-function/stargazers)
 [![Discord](https://img.shields.io/discord/652515194572111872)](https://img.shields.io/discord/652515194572111872)
 
-<p align="center">
-  <img src="https://repository-images.githubusercontent.com/254842585/4dfa7580-7ffb-11ea-99d0-46b8fe2f4170" height="175" width="auto" />
-</p>
-
 # thread-pool
 
 A simple, functional thread pool implementation using pure C++20.
