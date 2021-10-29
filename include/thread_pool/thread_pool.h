@@ -127,7 +127,6 @@ namespace dp {
 
     template <typename Function> void enqueue_task(Function &&f) {
       const std::size_t i = count_++ % queues_.size();
-
       queues_[i]->tasks.push(std::forward<Function>(f));
       queues_[i]->semaphore.release();
     }
