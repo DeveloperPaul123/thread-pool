@@ -58,7 +58,7 @@ auto main(int argc, char **argv) -> int {
     ("h,help", "Show help")
     ("x,width", "Image width", cxxopts::value(image_width)->default_value("2000"))
     ("y,height", "Image height", cxxopts::value(image_height)->default_value("2000"))
-    ("n,iterations", "Max iterations", cxxopts::value(max_iterations)->default_value("1000"))
+    ("n,iterations", "Max iterations", cxxopts::value(max_iterations)->default_value("30"))
     ("o,filename", "Output file name", cxxopts::value(output_file_name)->default_value("mandelbrot.ppm"))
   ;
   // clang-format on
