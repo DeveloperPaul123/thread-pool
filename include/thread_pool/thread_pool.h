@@ -138,5 +138,15 @@ namespace dp {
     std::size_t count_ = 0;
   };
 
+  /**
+   * @brief Thread pool class capable of queuing detached tasks and value returning tasks.
+   * @details This is a default alias for the dp::thread_pool_impl
+   */
   using thread_pool = thread_pool_impl<dp::safe_queue>;
+
+  /**
+   * @example mandelbrot/source/main.cpp
+   * Example showing how to use thread pool with tasks that return a value. Outputs a PPM image of a
+   * mandelbrot.
+   */
 }  // namespace dp
