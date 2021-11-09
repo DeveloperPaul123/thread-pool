@@ -9,7 +9,8 @@
 
 #include "fractal.h"
 
-void mandelbrot_threadpool(int image_width, int image_height, int max_iterations, std::string_view output_file_name) {
+void mandelbrot_threadpool(int image_width, int image_height, int max_iterations,
+                           std::string_view output_file_name) {
   fractal_window<int> source{0, image_width, 0, image_height};
   fractal_window<double> fract{-2.2, 1.2, -1.7, 1.7};
 
@@ -20,10 +21,10 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
   dp::thread_pool pool;
   std::vector<std::future<std::vector<rgb>>> futures;
   for (auto row = 0; row < source.height(); row++) {
-    auto task = [task_row = row](fractal_window<int> source_window,
-                                 fractal_window<double> fractal_window, int iter_max,
-                                 std::function<complex(complex, complex)> func) -> std::vector<rgb> {
-
+    auto task
+        = [task_row = row](fractal_window<int> source_window, fractal_window<double> fractal_window,
+                           int iter_max,
+                           std::function<complex(complex, complex)> func) -> std::vector<rgb> {
       return calculate_fractal_row(task_row, source_window, fractal_window, iter_max, func);
     };
 
