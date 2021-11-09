@@ -24,28 +24,26 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 // and so on..
 ```
 
-### Build and run the standalone target
+## Buliding
 
-Use the following command to build and run the executable target.
+This project has been built with:
 
-```bash
-cmake -S standalone -B build/standalone
-cmake --build build/standalone
-./build/standalone/ThreadPool --help
-```
+* Visual Studio 202`2
+* CMake `3.21+`
 
-### Build and run test suite
-
-Use the following commands from the project's root directory to run the test suite.
+To build run:
 
 ```bash
-cmake -S test -B build/test
-cmake --build build/test
-CTEST_OUTPUT_ON_FAILURE=1 cmake --build build/test --target test
-
-# or simply call the executable: 
-./build/test/ThreadPoolTests
+cmake -S . -B build
+cmake --build build
 ```
+
+### Build Options
+
+| Option | Description | Default |
+|:-------|:------------|:--------:|
+| `TP_BUILD_TESTS` | Turn on to build unit tests. Required for formatting build targets. | ON |
+| `TP_BUILD_EXAMPLES` | Turn on to build examples | ON |
 
 ### Run clang-format
 
@@ -76,7 +74,7 @@ cmake --build build/doc --target GenerateDocs
 open build/doc/doxygen/html/index.html
 ```
 
-To build the documentation locally, you will need Doxygen, jinja2 and Pygments on installed your system.
+To build the documentation locally, you will need Doxygen and Graphviz on your system.
 
 ## Contributing
 
