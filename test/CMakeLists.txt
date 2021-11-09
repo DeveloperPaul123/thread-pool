@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(ThreadPoolTests LANGUAGES CXX)
 
 # ---- Options ----
-
-option(ENABLE_TEST_COVERAGE "Enable test coverage" OFF)
 option(TEST_INSTALLED_VERSION "Test the version found by find_package" OFF)
 
 # --- Import tools ----
