@@ -15,23 +15,15 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    name: Ubuntu ${{ matrix.compiler }} {{ matrix.version }} C++${{ matrix.cpp }}
+    name: Ubuntu ${{ matrix.compiler }} ${{ matrix.version }} C++${{ matrix.cpp }}
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
         cpp: [20]
         compiler: [gcc, clang]
-        version: [""]
-        include: 
-          - compiler: gcc
-            version: 10
-          - compiler: gcc
-            version: 11
-          - compiler: clang
-            version: 12
-          - compiler: clang
-            version: 13
+        gcc-version: [10, 11]
+        clang-version: [12, 13]
         
     env:
       CPP_STANDARD: ${{ matrix.cpp }}
@@ -47,14 +39,14 @@ jobs:
       - name: set up Clang
         uses: egor-tensin/setup-clang@v1
         with:
-          version: ${{ matrix.version }}
+          version: ${{ matrix.clang-version }}
           platform: x64
         if: matrix.compiler == 'clang'
 
       - name: set up GCC
         uses: egor-tensin/setup-gcc@v1
         with:
-          version: ${{ matrix.version }}
+          version: ${{ matrix.gcc-version }}
           platform: x64
         if: matrix.compiler == 'gcc'
       
