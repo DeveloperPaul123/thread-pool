@@ -35,10 +35,10 @@ jobs:
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
           
       - name: set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 13
-          platform: x64
+        run: |
+          sudo apt update
+          sudo apt install clang-tools-12
+        
         if: matrix.compiler == 'Clang'
 
       - name: set up GCC
