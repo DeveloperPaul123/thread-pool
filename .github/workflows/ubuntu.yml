@@ -26,9 +26,13 @@ jobs:
         version: [""]
         include: 
           - compiler: gcc
-            version: [10, 11]
+            version: 10
+          - compiler: gcc
+            version: 11
           - compiler: clang
-            version: [12, 13]
+            version: 12
+          - compiler: clang
+            version: 13
         
     env:
       CPP_STANDARD: ${{ matrix.cpp }}
