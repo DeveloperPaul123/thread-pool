@@ -66,6 +66,7 @@ packageProject(
     INCLUDE_DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}
     VERSION_HEADER "${VERSION_HEADER_LOCATION}"
     COMPATIBILITY SameMajorVersion
+    DEPENDENCIES "Threads"
 )
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
