@@ -7,6 +7,7 @@
 namespace dp {
   template <typename T> class safe_queue {
   public:
+    using value_type = T;
     safe_queue() = default;
     void push(T&& value) {
       std::lock_guard lock(mutex_);

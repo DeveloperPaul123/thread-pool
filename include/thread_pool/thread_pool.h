@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 #include <future>
 #include <memory>
 #include <queue>
@@ -23,21 +24,21 @@ namespace dp {
       };
     }
 
-    template <template <class T> class Queue, class U>
-    concept is_valid_queue = requires(Queue<U> q) {
+    template <class Queue, class U = typename Queue::value_type>
+    concept is_valid_queue = requires(Queue q) {
       { q.empty() } -> std::convertible_to<bool>;
       { q.front() } -> std::convertible_to<U &>;
       { q.back() } -> std::convertible_to<U &>;
       q.pop();
     };
 
-    static_assert(detail::is_valid_queue<std::queue, int>);
-    static_assert(detail::is_valid_queue<dp::safe_queue, int>);
+    static_assert(detail::is_valid_queue<std::queue<int>>);
+    static_assert(detail::is_valid_queue<dp::safe_queue<int>>);
   }  // namespace detail
 
   template <template <class T> class Queue, typename FunctionType = std::function<void()>>
   requires std::invocable<FunctionType> && std::is_same_v<
-      void, std::invoke_result_t<FunctionType>> && detail::is_valid_queue<Queue, FunctionType>
+      void, std::invoke_result_t<FunctionType>> && detail::is_valid_queue<Queue<FunctionType>>
   class thread_pool_impl {
   public:
     thread_pool_impl(const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
@@ -68,7 +69,7 @@ namespace dp {
 
     ~thread_pool_impl() {
       // stop all threads
-      for (auto i = 0; i < threads_.size(); ++i) {
+      for (std::size_t i = 0; i < threads_.size(); ++i) {
         threads_[i].request_stop();
         queues_[i]->semaphore.release();
         threads_[i].join();
