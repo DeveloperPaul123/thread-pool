@@ -37,7 +37,7 @@ jobs:
       - name: set up Clang
         run: |
           sudo apt update
-          sudo apt install clang-tools-12
+          sudo apt install clang-12 clang-tools-12 
         
         if: matrix.compiler == 'Clang'
 
