@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -23,18 +23,13 @@ jobs:
           path: "**/cpm_modules"
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
 
-      - name: set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 13
-          platform: x64
-
       - name: Install format dependencies
         run: |
+          choco install llvm
           pip3 install cmake_format==0.6.11 pyyaml
 
       - name: configure
-        run: cmake -S . -B build -DTP_BUILD_EXAMPLES=OFF
+        run: cmake -G Ninja -S . -B build -DTP_BUILD_EXAMPLES=OFF
 
       - name: check style
         run: cmake --build build --target check-format
