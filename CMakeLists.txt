@@ -71,7 +71,6 @@ packageProject(
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
 option(TP_BUILD_EXAMPLES "Turn on to build examples." ON)
 
-add_subdirectory(documentation)
 if(${TP_BUILD_TESTS})
     add_subdirectory(test)
 endif()
