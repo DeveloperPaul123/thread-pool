@@ -11,9 +11,9 @@ include(../../cmake/tools.cmake)
 include(../../cmake/CPM.cmake)
 
 CPMAddPackage(
-  GITHUB_REPOSITORY jarro2783/cxxopts
-  VERSION 2.2.1
-  OPTIONS "CXXOPTS_BUILD_EXAMPLES NO" "CXXOPTS_BUILD_TESTS NO" "CXXOPTS_ENABLE_INSTALL YES"
+    GITHUB_REPOSITORY jarro2783/cxxopts
+    VERSION 2.2.1
+    OPTIONS "CXXOPTS_BUILD_EXAMPLES NO" "CXXOPTS_BUILD_TESTS NO" "CXXOPTS_ENABLE_INSTALL YES"
 )
 
 # ---- Create standalone executable ----

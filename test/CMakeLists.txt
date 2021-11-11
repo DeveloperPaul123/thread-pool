@@ -17,7 +17,7 @@ CPMAddPackage("gh:onqtam/doctest#2.4.5")
 CPMAddPackage("gh:TheLartians/Format.cmake@1.7.0")
 
 if(TEST_INSTALLED_VERSION)
-  find_package(ThreadPool REQUIRED)
+    find_package(ThreadPool REQUIRED)
 endif()
 
 # ---- Create binary ----
@@ -29,12 +29,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 
 # enable compiler warnings
 if(NOT TEST_INSTALLED_VERSION)
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(ThreadPool INTERFACE -Wall -Wpedantic -Wextra -Werror)
-  elseif(MSVC)
-    target_compile_options(ThreadPool INTERFACE /W4 /WX)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC DOCTEST_CONFIG_USE_STD_HEADERS)
-  endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        target_compile_options(ThreadPool INTERFACE -Wall -Wpedantic -Wextra -Werror)
+    elseif(MSVC)
+        target_compile_options(ThreadPool INTERFACE /W4 /WX)
+        target_compile_definitions(${PROJECT_NAME} PUBLIC DOCTEST_CONFIG_USE_STD_HEADERS)
+    endif()
 endif()
 
 # ---- Add GreeterTests ----
@@ -50,6 +50,6 @@ doctest_discover_tests(ThreadPoolTests)
 # ---- code coverage ----
 
 if(ENABLE_TEST_COVERAGE)
-  target_compile_options(ThreadPool PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
-  target_link_options(ThreadPool PUBLIC -fprofile-arcs -ftest-coverage)
+    target_compile_options(ThreadPool PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
+    target_link_options(ThreadPool PUBLIC -fprofile-arcs -ftest-coverage)
 endif()

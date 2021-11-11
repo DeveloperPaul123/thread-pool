@@ -1,5 +1,5 @@
 format:
-  tab_size: 2
+  tab_size: 4
   line_width: 100
   dangle_parens: true
 
