@@ -12,7 +12,8 @@ A simple, functional thread pool implementation using pure C++20.
 
 ## Usage
 
-Simple example
+Simple exampl
+
 ```cpp
 // create a thread pool with a specified number of threads.
 dp::thread_pool pool(4);
@@ -24,14 +25,18 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 // and so on..
 ```
 
+You can see other examples in the `/examples` folder.
+
 ## Buliding
 
 This project has been built with:
 
-* Visual Studio 202`2
+* Visual Studio 2022
+* Clang `10.+` (via WSL on Windows)
+* GCC `11.+` (vis WSL on Windows)
 * CMake `3.21+`
 
-To build run:
+To build, run:
 
 ```bash
 cmake -S . -B build
@@ -48,11 +53,9 @@ cmake --build build
 ### Run clang-format
 
 Use the following commands from the project's root directory to check and fix C++ and CMake source style.
-This requires _clang-format_, _cmake-format_ and _pyyaml_ to be installed on the current system.
+This requires _clang-format_, _cmake-format_ and _pyyaml_ to be installed on the current system. To use this feature you must turn on `TP_BUILD_TESTS`.
 
 ```bash
-cmake -S test -B build/test
-
 # view changes
 cmake --build build/test --target format
 
