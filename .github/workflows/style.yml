@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -25,7 +25,7 @@ jobs:
 
       - name: Install format dependencies
         run: |
-          brew install clang-format
+          choco install llvm
           pip3 install cmake_format==0.6.11 pyyaml
 
       - name: configure

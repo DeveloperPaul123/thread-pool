@@ -13,22 +13,22 @@
 using complex = std::complex<double>;
 
 struct rgb {
-  int r{};
-  int g{};
-  int b{};
+    int r{};
+    int g{};
+    int b{};
 };
 
 /// @brief Simple range class for viewing window and fractal window
 template <class T>
 requires std::integral<T> || std::floating_point<T>
 struct fractal_window {
-  T x_min{};
-  T x_max{};
-  T y_min{};
-  T y_max{};
-  constexpr T height() const noexcept { return y_max - y_min; }
-  constexpr T width() const noexcept { return x_max - x_min; }
-  constexpr T size() const noexcept { return width() * height(); }
+    T x_min{};
+    T x_max{};
+    T y_min{};
+    T y_max{};
+    constexpr T height() const noexcept { return y_max - y_min; }
+    constexpr T width() const noexcept { return x_max - x_min; }
+    constexpr T size() const noexcept { return width() * height(); }
 };
 
 /// @brief Performs smooth polynomial fitting to the given value.

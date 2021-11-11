@@ -6,11 +6,12 @@
   AlwaysBreakTemplateDeclarations: 'No'
   BreakBeforeBraces: Attach
   ColumnLimit: '100'
-  ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
+  ConstructorInitializerAllOnOneLineOrOnePerLine: 'false'
   IncludeBlocks: Regroup
   IndentPPDirectives: AfterHash
-  IndentWidth: '2'
+  IndentWidth: '4'
   NamespaceIndentation: All
-  BreakBeforeBinaryOperators: All
+  BreakBeforeBinaryOperators: None
   BreakBeforeTernaryOperators: 'true'
+  AlwaysBreakTemplateDeclarations: 'Yes'
 ...
