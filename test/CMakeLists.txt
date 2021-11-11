@@ -46,10 +46,3 @@ enable_testing()
 
 include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
 doctest_discover_tests(ThreadPoolTests)
-
-# ---- code coverage ----
-
-if(ENABLE_TEST_COVERAGE)
-    target_compile_options(ThreadPool PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
-    target_link_options(ThreadPool PUBLIC -fprofile-arcs -ftest-coverage)
-endif()
