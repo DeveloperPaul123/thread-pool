@@ -9,7 +9,7 @@ namespace dp {
     class thread_safe_queue {
       public:
         using value_type = T;
-        using size_type = std::queue<T>::size_type;
+        using size_type = typename std::queue<T>::size_type;
 
         thread_safe_queue() = default;
         void push(T&& value) {
