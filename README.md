@@ -17,6 +17,33 @@ A simple, functional thread pool implementation using pure C++20.
 * Built entirely with C++20
 * Enqueue tasks with or without tracking results
 
+## Integration
+
+`dp::thread-pool` is a header only library. All the files needed are in `include/thread_pool`. 
+
+### CMake
+
+`ThreadPool` defines two CMake targets:
+
+* `ThreadPool::ThreadPool`
+* `dp::thread-pool`
+
+You can then use `find_package()`:
+
+```cmake
+find_package(dp::thread-pool REQUIRED)
+```
+
+Alternatively, you can use something like [CPM](https://github.com/TheLartians/CPM) which is based on CMake's `Fetch_Content` module.
+
+```cmake
+CPMAddPackage(
+    NAME thread-pool
+    GITHUB_REPOSITORY DeveloperPaul123/thread-pool
+    GIT_TAG #0cea9c12fb30cb677696c0dce6228594ce26171a change this to latest commit or release tag
+)
+```
+
 ## Usage
 
 Simple example:
