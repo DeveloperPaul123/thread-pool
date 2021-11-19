@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 # Note: update this to your new project's name and version
 project(
     ThreadPool
-    VERSION 1.0.0
+    VERSION 0.2.0
     LANGUAGES CXX
 )
 
