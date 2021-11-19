@@ -101,10 +101,8 @@ namespace dp {
         [[nodiscard]] std::future<ReturnType> enqueue(Function &&f, Args &&...args) {
             // use shared promise here so that we don't break the promise later
             auto shared_promise = std::make_shared<std::promise<ReturnType>>();
-            auto task = [func = std::move(f), ...largs = std::move(args),
-                         promise = shared_promise]() { 
-                promise->set_value(func(largs...)); 
-            };
+            auto task = [func = std::move(f), ... largs = std::move(args),
+                         promise = shared_promise]() { promise->set_value(func(largs...)); };
             // get the future before enqueuing the task
             auto future = shared_promise->get_future();
             // enqueue the task
