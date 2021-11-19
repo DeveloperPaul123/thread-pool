@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7ethread_5fpool_5fimpl_0',['~thread_pool_impl',['../d8/dff/classdp_1_1thread__pool__impl.html#a0532194381313ef674574a52f13e1505',1,'dp::thread_pool_impl']]]
+  ['value_5ftype_0',['value_type',['../d7/d54/classdp_1_1thread__safe__queue.html#a150c2aab4b307cef64b4d845b0b9d19a',1,'dp::thread_safe_queue']]]
 ];

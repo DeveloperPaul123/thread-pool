@@ -100,6 +100,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a24b16122febfefca5d8ad73e095510b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0532194381313ef674574a52f13e1505"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html#a0532194381313ef674574a52f13e1505">~thread_pool_impl</a> ()</td></tr>
 <tr class="separator:a0532194381313ef674574a52f13e1505"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad23c85a21c65f8925a36ab0796f55371"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html#ad23c85a21c65f8925a36ab0796f55371">thread_pool_impl</a> (const <a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a> &amp;)=delete</td></tr>
+<tr class="memdesc:ad23c85a21c65f8925a36ab0796f55371"><td class="mdescLeft">&#160;</td><td class="mdescRight">thread pool is non-copyable  <a href="../../d8/dff/classdp_1_1thread__pool__impl.html#ad23c85a21c65f8925a36ab0796f55371">More...</a><br /></td></tr>
+<tr class="separator:ad23c85a21c65f8925a36ab0796f55371"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b6dd2bd87ee7be1ba746f1c40906c8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html#a9b6dd2bd87ee7be1ba746f1c40906c8d">operator=</a> (const <a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a> &amp;)=delete</td></tr>
+<tr class="separator:a9b6dd2bd87ee7be1ba746f1c40906c8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a677f8a4cb62a421a196d8c7a43bcfae0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html#a677f8a4cb62a421a196d8c7a43bcfae0">enqueue_task</a> (std::move(<a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html#adf1373cee1a2dc729dc948fe83e06490">task</a>))</td></tr>
 <tr class="separator:a677f8a4cb62a421a196d8c7a43bcfae0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54c79ddcdab5cec5fd6e272c3930d3f5"><td class="memTemplParams" colspan="2">template&lt;typename Function , typename... Args&gt; <br />
@@ -126,7 +131,7 @@ class dp::thread_pool_impl&lt; Queue, FunctionType &gt;</div><dl class="section 
 </dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a24b16122febfefca5d8ad73e095510b6" name="a24b16122febfefca5d8ad73e095510b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a24b16122febfefca5d8ad73e095510b6">&#9670;&nbsp;</a></span>thread_pool_impl()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a24b16122febfefca5d8ad73e095510b6">&#9670;&nbsp;</a></span>thread_pool_impl() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -177,6 +182,36 @@ template&lt;template&lt; class T &gt; class Queue, typename FunctionType  = std:
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad23c85a21c65f8925a36ab0796f55371" name="ad23c85a21c65f8925a36ab0796f55371"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad23c85a21c65f8925a36ab0796f55371">&#9670;&nbsp;</a></span>thread_pool_impl() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;template&lt; class T &gt; class Queue, typename FunctionType  = std::function&lt;void()&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">dp::thread_pool_impl</a>&lt; Queue, FunctionType &gt;::<a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a> </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a>&lt; Queue, FunctionType &gt; &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>thread pool is non-copyable </p>
 
 </div>
 </div>
@@ -258,6 +293,34 @@ template&lt;template&lt; class T &gt; class Queue, typename FunctionType  = std:
 
 </div>
 </div>
+<a id="a9b6dd2bd87ee7be1ba746f1c40906c8d" name="a9b6dd2bd87ee7be1ba746f1c40906c8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b6dd2bd87ee7be1ba746f1c40906c8d">&#9670;&nbsp;</a></span>operator=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;template&lt; class T &gt; class Queue, typename FunctionType  = std::function&lt;void()&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a> &amp; <a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">dp::thread_pool_impl</a>&lt; Queue, FunctionType &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d8/dff/classdp_1_1thread__pool__impl.html">thread_pool_impl</a>&lt; Queue, FunctionType &gt; &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="a69dd4dcd0d94c37c7126c6bcb276e686" name="a69dd4dcd0d94c37c7126c6bcb276e686"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a69dd4dcd0d94c37c7126c6bcb276e686">&#9670;&nbsp;</a></span>future <span class="overload">[1/2]</span></h2>
@@ -306,8 +369,8 @@ template&lt;typename Function , typename... Args, typename ReturnType  = std::in
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= [func = std::move(f), tup = std::make_tuple(std::move(args)...),</div>
-<div class="line">                         promise = shared_promise]() { promise-&gt;set_value(std::apply(func, tup)); }</div>
+<b>Initial value:</b><div class="fragment"><div class="line">= [func = std::move(f), ... largs = std::move(args),</div>
+<div class="line">                         promise = shared_promise]() { promise-&gt;set_value(func(largs...)); }</div>
 </div><!-- fragment -->
 <p>Enqueue a task into the thread pool that returns a result. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
