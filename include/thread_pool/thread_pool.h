@@ -9,7 +9,7 @@
 #include <thread>
 #include <type_traits>
 
-#include "thread_pool/safe_queue.h"
+#include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
 
@@ -37,7 +37,7 @@ namespace dp {
         };
 
         static_assert(detail::is_valid_queue<std::queue<int>>);
-        static_assert(detail::is_valid_queue<dp::safe_queue<int>>);
+        static_assert(detail::is_valid_queue<dp::thread_safe_queue<int>>);
     }  // namespace detail
 
     template <template <class T> class Queue, typename FunctionType = std::function<void()>>
@@ -150,7 +150,7 @@ namespace dp {
      * @brief Thread pool class capable of queuing detached tasks and value returning tasks.
      * @details This is a default alias for the dp::thread_pool_impl
      */
-    using thread_pool = thread_pool_impl<dp::safe_queue>;
+    using thread_pool = thread_pool_impl<dp::thread_safe_queue>;
 
     /**
      * @example mandelbrot/source/main.cpp

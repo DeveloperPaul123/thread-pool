@@ -37,10 +37,6 @@ if(NOT TEST_INSTALLED_VERSION)
     endif()
 endif()
 
-# ---- Add unit tests ----
-enable_testing()
-
 # Note: doctest and similar testing frameworks can automatically configure CMake tests. For other
-
 include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
 doctest_discover_tests(${PROJECT_NAME})
