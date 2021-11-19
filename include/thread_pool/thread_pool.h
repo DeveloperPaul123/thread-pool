@@ -82,6 +82,10 @@ namespace dp {
             }
         }
 
+        /// thread pool is non-copyable
+        thread_pool_impl(const thread_pool_impl &) = delete;
+        thread_pool_impl &operator=(const thread_pool_impl &) = delete;
+
         /**
          * @brief Enqueue a task into the thread pool that returns a result.
          * @tparam Function An invocable type.
@@ -97,12 +101,10 @@ namespace dp {
         [[nodiscard]] std::future<ReturnType> enqueue(Function &&f, Args &&...args) {
             // use shared promise here so that we don't break the promise later
             auto shared_promise = std::make_shared<std::promise<ReturnType>>();
-            // here we move arguments into a tuple since we cannot do an init-capture followed by an
-            // ellipsis doing arguments = std::move(args)... would be better here, but currently not
-            // possible. see: http://eel.is/c++draft/expr.prim.lambda#capture-17.sentence-2 see:
-            // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0780r1.html
-            auto task = [func = std::move(f), tup = std::make_tuple(std::move(args)...),
-                         promise = shared_promise]() { promise->set_value(std::apply(func, tup)); };
+            auto task = [func = std::move(f), ...largs = std::move(args),
+                         promise = shared_promise]() { 
+                promise->set_value(func(largs...)); 
+            };
             // get the future before enqueuing the task
             auto future = shared_promise->get_future();
             // enqueue the task
