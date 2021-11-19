@@ -19,7 +19,7 @@ A simple, functional thread pool implementation using pure C++20.
 
 ## Usage
 
-Simple exampl
+Simple example:
 
 ```cpp
 // create a thread pool with a specified number of threads.
