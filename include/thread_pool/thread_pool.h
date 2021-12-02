@@ -28,16 +28,6 @@ namespace dp {
             };
         }
 
-        template <class Queue, class U = typename Queue::value_type>
-        concept is_valid_queue = requires(Queue q) {
-            { q.empty() } -> std::convertible_to<bool>;
-            { q.front() } -> std::convertible_to<U &>;
-            { q.back() } -> std::convertible_to<U &>;
-            q.pop();
-        };
-
-        static_assert(detail::is_valid_queue<std::queue<int>>);
-        static_assert(detail::is_valid_queue<dp::thread_safe_queue<int>>);
     }  // namespace detail
 
     template <typename FunctionType = std::function<void()>>
@@ -96,7 +86,7 @@ namespace dp {
         template <typename Function, typename... Args,
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
         requires std::invocable<Function, Args...>
-        [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args ...args) {
+        [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
             /*
              * use shared promise here so that we don't break the promise later (until C++23)
              *
