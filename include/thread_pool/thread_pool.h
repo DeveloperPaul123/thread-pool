@@ -53,6 +53,8 @@ namespace dp {
                             auto &task = queues_[id].tasks.front();
                             // invoke the task
                             std::invoke(std::move(task));
+                            // decrement in-flight counter
+                            --in_flight_;
                             // remove task from the queue
                             queues_[id].tasks.pop();
                         }
@@ -62,6 +64,11 @@ namespace dp {
         }
 
         ~thread_pool() {
+            // wait for tasks to complete first
+            do {
+                std::this_thread::yield();
+            } while (in_flight_ > 0);
+
             // stop all threads
             for (std::size_t i = 0; i < threads_.size(); ++i) {
                 threads_[i].request_stop();
@@ -131,6 +138,7 @@ namespace dp {
         template <typename Function>
         void enqueue_task(Function &&f) {
             const std::size_t i = count_++ % queues_.size();
+            ++in_flight_;
             queues_[i].tasks.push(std::forward<Function>(f));
             queues_[i].semaphore.release();
         }
@@ -138,6 +146,7 @@ namespace dp {
         std::vector<std::jthread> threads_;
         std::deque<task_queue> queues_;
         std::size_t count_ = 0;
+        std::atomic<int64_t> in_flight_{0};
     };
 
     /**
