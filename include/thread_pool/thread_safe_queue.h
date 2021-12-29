@@ -1,22 +1,26 @@
 #pragma once
 
 #include <condition_variable>
+#include <deque>
 #include <mutex>
-#include <queue>
 
 namespace dp {
     template <typename T>
     class thread_safe_queue {
       public:
         using value_type = T;
-        using size_type = typename std::queue<T>::size_type;
+        using size_type = typename std::deque<T>::size_type;
 
         thread_safe_queue() = default;
+
         void push(T&& value) {
-            std::lock_guard lock(mutex_);
-            data_.push(std::forward<T>(value));
+            {
+                std::lock_guard lock(mutex_);
+                data_.push_back(std::forward<T>(value));
+            }
             condition_variable_.notify_all();
         }
+
         bool empty() {
             std::lock_guard lock(mutex_);
             return data_.empty();
@@ -42,12 +46,12 @@ namespace dp {
         void pop() {
             std::unique_lock lock(mutex_);
             condition_variable_.wait(lock, [this] { return !data_.empty(); });
-            data_.pop();
+            data_.pop_front();
         }
 
       private:
         using mutex_type = std::mutex;
-        std::queue<T> data_;
+        std::deque<T> data_;
         mutable mutex_type mutex_{};
         std::condition_variable condition_variable_{};
     };

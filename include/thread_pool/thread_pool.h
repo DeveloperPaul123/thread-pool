@@ -19,7 +19,7 @@ namespace dp {
             return std::forward<T>(v);
         }
 
-        // Bind F and args... into a nullary one-shot lambda. Lambda captures by value.
+        // bind F and parameter pack into a nullary one shot. Lambda captures by value.
         template <typename... Args, typename F>
         auto bind(F &&f, Args &&...args) {
             return [f = decay_copy(std::forward<F>(f)),
@@ -28,63 +28,58 @@ namespace dp {
             };
         }
 
-        template <class Queue, class U = typename Queue::value_type>
-        concept is_valid_queue = requires(Queue q) {
-            { q.empty() } -> std::convertible_to<bool>;
-            { q.front() } -> std::convertible_to<U &>;
-            { q.back() } -> std::convertible_to<U &>;
-            q.pop();
-        };
-
-        static_assert(detail::is_valid_queue<std::queue<int>>);
-        static_assert(detail::is_valid_queue<dp::thread_safe_queue<int>>);
     }  // namespace detail
 
-    template <template <class T> class Queue, typename FunctionType = std::function<void()>>
+    template <typename FunctionType = std::function<void()>>
     requires std::invocable<FunctionType> &&
-        std::is_same_v<void, std::invoke_result_t<FunctionType>> &&
-        detail::is_valid_queue<Queue<FunctionType>>
-    class thread_pool_impl {
+        std::is_same_v<void, std::invoke_result_t<FunctionType>>
+    class thread_pool {
       public:
-        thread_pool_impl(
-            const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
+        thread_pool(const unsigned int &number_of_threads = std::thread::hardware_concurrency())
+            : queues_(number_of_threads) {
             for (std::size_t i = 0; i < number_of_threads; ++i) {
-                queues_.push_back(std::make_unique<task_pair>());
                 threads_.emplace_back([&, id = i](std::stop_token stop_tok) {
                     do {
                         // check if we have task
-                        if (queues_[id]->tasks.empty()) {
+                        if (queues_[id].tasks.empty()) {
                             // no tasks, so we wait instead of spinning
-                            queues_[id]->semaphore.acquire();
+                            queues_[id].semaphore.acquire();
                         }
 
                         // ensure we have a task before getting task
                         // since the dtor releases the semaphore as well
-                        if (!queues_[id]->tasks.empty()) {
+                        if (!queues_[id].tasks.empty()) {
                             // get the task
-                            auto &task = queues_[id]->tasks.front();
+                            auto &task = queues_[id].tasks.front();
                             // invoke the task
                             std::invoke(std::move(task));
+                            // decrement in-flight counter
+                            --in_flight_;
                             // remove task from the queue
-                            queues_[id]->tasks.pop();
+                            queues_[id].tasks.pop();
                         }
                     } while (!stop_tok.stop_requested());
                 });
             }
         }
 
-        ~thread_pool_impl() {
+        ~thread_pool() {
+            // wait for tasks to complete first
+            do {
+                std::this_thread::yield();
+            } while (in_flight_ > 0);
+
             // stop all threads
             for (std::size_t i = 0; i < threads_.size(); ++i) {
                 threads_[i].request_stop();
-                queues_[i]->semaphore.release();
+                queues_[i].semaphore.release();
                 threads_[i].join();
             }
         }
 
         /// thread pool is non-copyable
-        thread_pool_impl(const thread_pool_impl &) = delete;
-        thread_pool_impl &operator=(const thread_pool_impl &) = delete;
+        thread_pool(const thread_pool &) = delete;
+        thread_pool &operator=(const thread_pool &) = delete;
 
         /**
          * @brief Enqueue a task into the thread pool that returns a result.
@@ -98,11 +93,21 @@ namespace dp {
         template <typename Function, typename... Args,
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
         requires std::invocable<Function, Args...>
-        [[nodiscard]] std::future<ReturnType> enqueue(Function &&f, Args &&...args) {
-            // use shared promise here so that we don't break the promise later
+        [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
+            /*
+             * use shared promise here so that we don't break the promise later (until C++23)
+             *
+             * with C++23 we can do the following:
+             *
+             * std::promise<ReturnType> promise;
+             * auto future = promise.get_future();
+             * auto task = [func = std::move(f), ... largs = std::move(args),
+                              promise = std::move(promise)]() mutable {...};
+             */
             auto shared_promise = std::make_shared<std::promise<ReturnType>>();
             auto task = [func = std::move(f), ... largs = std::move(args),
                          promise = shared_promise]() { promise->set_value(func(largs...)); };
+
             // get the future before enqueuing the task
             auto future = shared_promise->get_future();
             // enqueue the task
@@ -125,32 +130,24 @@ namespace dp {
         }
 
       private:
-        using semaphore_type = std::binary_semaphore;
-        using task_type = FunctionType;
-        struct task_pair {
-            semaphore_type semaphore{0};
-            Queue<task_type> tasks{};
+        struct task_queue {
+            std::binary_semaphore semaphore{0};
+            dp::thread_safe_queue<FunctionType> tasks{};
         };
 
         template <typename Function>
         void enqueue_task(Function &&f) {
             const std::size_t i = count_++ % queues_.size();
-            queues_[i]->tasks.push(std::forward<Function>(f));
-            queues_[i]->semaphore.release();
+            ++in_flight_;
+            queues_[i].tasks.push(std::forward<Function>(f));
+            queues_[i].semaphore.release();
         }
 
         std::vector<std::jthread> threads_;
-        // have to use unique_ptr here because std::binary_semaphore is not move/copy
-        // assignable/constructible
-        std::vector<std::unique_ptr<task_pair>> queues_;
+        std::deque<task_queue> queues_;
         std::size_t count_ = 0;
+        std::atomic<int64_t> in_flight_{0};
     };
-
-    /**
-     * @brief Thread pool class capable of queuing detached tasks and value returning tasks.
-     * @details This is a default alias for the dp::thread_pool_impl
-     */
-    using thread_pool = thread_pool_impl<dp::thread_safe_queue>;
 
     /**
      * @example mandelbrot/source/main.cpp

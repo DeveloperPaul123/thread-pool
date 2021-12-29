@@ -3,9 +3,8 @@
 
 #include <string>
 
-TEST_CASE("Basic Return Types") {
+TEST_CASE("Basic task return types") {
     dp::thread_pool pool(2);
-    // TODO
     auto future_value = pool.enqueue([](const int& value) { return value; }, 30);
     auto future_negative = pool.enqueue([](int x) -> int { return x - 20; }, 3);
 
@@ -29,4 +28,22 @@ TEST_CASE("Ensure input params are properly passed") {
     for (auto j = 0; j < total_tasks; j++) {
         CHECK(j == futures[j].get());
     }
+}
+
+TEST_CASE("Ensure work completes upon destruction") {
+    std::atomic<int> counter;
+    std::vector<std::future<int>> futures;
+    const auto total_tasks = 20;
+    {
+        dp::thread_pool pool(4);
+        for (auto i = 0; i < total_tasks; i++) {
+            auto task = [index = i, &counter]() {
+                counter++;
+                return index;
+            };
+            futures.push_back(pool.enqueue(task));
+        }
+    }
+
+    CHECK_EQ(counter.load(), total_tasks);
 }
