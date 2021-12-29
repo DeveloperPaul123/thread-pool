@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['thread_5fpool_0',['thread_pool',['../df/d88/namespacedp.html#abebe07f5e56c668fbcab466e4a65a011',1,'dp']]]
+  ['value_5ftype_0',['value_type',['../d7/d54/classdp_1_1thread__safe__queue.html#a150c2aab4b307cef64b4d845b0b9d19a',1,'dp::thread_safe_queue']]]
 ];

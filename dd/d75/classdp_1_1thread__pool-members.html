@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>thread-pool: dp::detail::is_valid_queue Concept Reference</title>
+<title>thread-pool: Member List</title>
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
@@ -64,7 +64,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('d0/d48/conceptdp_1_1detail_1_1is__valid__queue.html','../../'); initResizable(); });
+$(document).ready(function(){initNavTree('d8/d6e/classdp_1_1thread__pool.html','../../'); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -83,26 +83,26 @@ $(document).ready(function(){initNavTree('d0/d48/conceptdp_1_1detail_1_1is__vali
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">dp::detail::is_valid_queue Concept Reference</div></div>
+  <div class="headertitle"><div class="title">dp::thread_pool&lt; FunctionType &gt; Member List</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="../../d3/dec/thread__pool_8h_source.html">thread_pool.h</a>&gt;</code></p>
-<h2 class="groupheader">Concept definition</h2>
-<div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Queue, <span class="keyword">class</span> U <span class="keyword">typename</span> Queue::value_type&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="../../d0/d48/conceptdp_1_1detail_1_1is__valid__queue.html">dp::detail::is_valid_queue</a> =  <span class="keyword">requires</span>(Queue q) {</div>
-<div class="line">            { q.empty() } -&gt; std::convertible_to&lt;bool&gt;;</div>
-<div class="line">            { q.front() } -&gt; std::convertible_to&lt;U &amp;&gt;;</div>
-<div class="line">            { q.back() } -&gt; std::convertible_to&lt;U &amp;&gt;;</div>
-<div class="line">            q.pop();</div>
-<div class="line">        }</div>
-<div class="ttc" id="aconceptdp_1_1detail_1_1is__valid__queue_html"><div class="ttname"><a href="../../d0/d48/conceptdp_1_1detail_1_1is__valid__queue.html">dp::detail::is_valid_queue</a></div><div class="ttdef"><b>Definition:</b> thread_pool.h:32</div></div>
-</div><!-- fragment --></div><!-- contents -->
+<p>This is the complete list of members for <a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a>, including all inherited members.</p>
+<table class="directory">
+  <tr class="even"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a8f358d8fd0ae1a7913cbd9f2a5fc0988">enqueue_detach</a>(Function &amp;&amp;func, Args &amp;&amp;...args)</td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a6cce259b201b78c4bddfed49e52c9663">enqueue_task</a>(std::move(task))</td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a7a848f53fa64ddf5f26a65add574f696">future</a></td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a02049ef71db7a911275ca5c174480dd4">future</a></td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a29dc93d784e645778a140acbeae7704b">operator=</a>(const thread_pool &amp;)=delete</td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a156cecf36ef1c584b0eca837a4dca34f">task</a></td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a43902f687da38b7a21544e591ff314bc">thread_pool</a>(const unsigned int &amp;number_of_threads=std::thread::hardware_concurrency())</td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#aa9ddbc3eefde629ba4d6690276ba3c6e">thread_pool</a>(const thread_pool &amp;)=delete</td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html#a61d30540488ff995cab5db7051e3d01a">~thread_pool</a>()</td><td class="entry"><a class="el" href="../../d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool&lt; FunctionType &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+</table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../df/d88/namespacedp.html">dp</a></li><li class="navelem"><a class="el" href="../../d9/d9b/namespacedp_1_1detail.html">detail</a></li><li class="navelem"><a class="el" href="../../d0/d48/conceptdp_1_1detail_1_1is__valid__queue.html">is_valid_queue</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2 </li>
   </ul>
 </div>

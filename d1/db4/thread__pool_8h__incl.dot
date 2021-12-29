@@ -26,6 +26,7 @@ digraph "thread_pool/thread_pool.h"
   Node10 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
   Node11 [label="condition_variable",height=0.2,width=0.4,color="grey75",tooltip=" "];
   Node10 -> Node12 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
-  Node12 [label="mutex",height=0.2,width=0.4,color="grey75",tooltip=" "];
-  Node10 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="deque",height=0.2,width=0.4,color="grey75",tooltip=" "];
+  Node10 -> Node13 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="mutex",height=0.2,width=0.4,color="grey75",tooltip=" "];
 }
