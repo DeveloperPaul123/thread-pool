@@ -17,7 +17,7 @@ TEST_CASE("Basic task return types") {
 
 TEST_CASE("Ensure input params are properly passed") {
     dp::thread_pool pool(4);
-    const auto total_tasks = 30;
+    constexpr auto total_tasks = 30;
     std::vector<std::future<int>> futures;
 
     for (auto i = 0; i < total_tasks; i++) {
@@ -33,13 +33,13 @@ TEST_CASE("Ensure input params are properly passed") {
 
 TEST_CASE("Ensure work completes upon destruction") {
     std::atomic<int> counter;
-    std::vector<std::future<int>> futures;
-    const auto total_tasks = 20;
+    constexpr auto total_tasks = 20;
     {
+        std::vector<std::future<int>> futures;
         dp::thread_pool pool(4);
         for (auto i = 0; i < total_tasks; i++) {
             auto task = [index = i, &counter]() {
-                counter++;
+                ++counter;
                 return index;
             };
             futures.push_back(pool.enqueue(task));
