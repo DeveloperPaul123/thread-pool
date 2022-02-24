@@ -9,7 +9,7 @@ TEST_CASE("Check size while waiting for front") {
     int item = 0;
     std::jthread wait_for_item_thread([&item, &queue]() {
         // this will block until an item becomes available
-        item = queue.front();
+        item = queue.pop();
     });
 
     if (queue.empty()) {
