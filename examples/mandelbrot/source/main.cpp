@@ -48,7 +48,7 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
 }
 
 auto main(int argc, char **argv) -> int {
-    cxxopts::Options options(*argv, "Generate a mandelbrot ppm image using a threadpool!");
+    cxxopts::Options options(*argv, "Generate a mandelbrot ppm image using a thread pool!");
 
     int image_width;
     int image_height;

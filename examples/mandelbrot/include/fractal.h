@@ -1,7 +1,6 @@
 /// Much of the code here is adopted from https://github.com/sol-prog/Mandelbrot_set
 #pragma once
 
-#include <array>
 #include <complex>
 #include <concepts>
 #include <functional>

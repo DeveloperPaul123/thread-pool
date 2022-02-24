@@ -1,9 +1,7 @@
 #include "fractal.h"
 
-#include <cassert>
 #include <chrono>
 #include <fstream>
-#include <iostream>
 
 rgb get_rgb_smooth(int n, int iter_max) {
     // map n on the 0..1 interval
@@ -20,37 +18,28 @@ void save_ppm(fractal_window<int>& source, std::span<rgb> colors, std::string_vi
     constexpr auto new_line = '\n';
 
     unsigned int width = source.width(), height = source.height();
-    std::ofstream output_ppm(file_name.data(), std::ios::binary | std::ios::out);
+    std::ofstream output_ppm(file_name.data(), std::ios::binary);
     // TODO: Switch to using std::format
     // output header
-    output_ppm << "P3 " << width << " " << height << " " << 255 << new_line;
+    output_ppm << "P6 " << new_line;
+    output_ppm << "# created by DeveloperPaul123/thread-pool mandelbrot sample.\n";
+    output_ppm << width << " " << height << " " << 255 << new_line;
+
+    auto buffer = std::make_unique<uint8_t[]>(width * height * 3);
+
     for (int i = source.y_min; i < source.y_max; ++i) {
         for (int j = source.x_min; j < source.x_max; ++j) {
-            auto index = i * width + j;
-            auto pixel = colors[index];
-            output_ppm << pixel.r << " " << pixel.g << " " << pixel.b << " ";
-        }
-        output_ppm << new_line;
-    }
-}
+            const auto index = i * width + j;
+            const auto pixel = colors[index];
+            const auto buffer_index = i * width * 3 + (j + source.x_min) * 3;
 
-void plot(fractal_window<int>& scr, std::vector<int>& colors, int iter_max, const char* fname) {
-    constexpr auto new_line = '\n';
-
-    unsigned int width = scr.width(), height = scr.height();
-    std::ofstream output_ppm(fname, std::ios::binary | std::ios::out);
-    // TODO: Switch to using std::format
-    // output header
-    output_ppm << "P3 " << width << " " << height << " " << 255 << new_line;
-    for (int i = scr.y_min; i < scr.y_max; ++i) {
-        for (int j = scr.x_min; j < scr.x_max; ++j) {
-            auto index = i * width + j;
-            int n = colors[index];
-            auto pixel = get_rgb_smooth(n, iter_max);
-            output_ppm << pixel.r << " " << pixel.g << " " << pixel.b << " ";
+            buffer[buffer_index] = static_cast<uint8_t>(pixel.r);
+            buffer[buffer_index + 1] = static_cast<uint8_t>(pixel.g);
+            buffer[buffer_index + 2] = static_cast<uint8_t>(pixel.b);
         }
-        output_ppm << new_line;
     }
+
+    output_ppm.write(reinterpret_cast<char*>(buffer.get()), width * height * 3);
 }
 
 // Convert a pixel coordinate to the complex domain
