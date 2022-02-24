@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <memory>
 
 rgb get_rgb_smooth(int n, int iter_max) {
     // map n on the 0..1 interval
