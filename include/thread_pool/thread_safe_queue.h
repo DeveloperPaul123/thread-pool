@@ -31,18 +31,6 @@ namespace dp {
             return data_.size();
         }
 
-        // [[nodiscard]] T& front() {
-        //     std::unique_lock lock(mutex_);
-        //     condition_variable_.wait(lock, [this] { return !data_.empty(); });
-        //     return data_.front();
-        // }
-        //
-        // [[nodiscard]] T& back() {
-        //     std::unique_lock lock(mutex_);
-        //     condition_variable_.wait(lock, [this] { return !data_.empty(); });
-        //     return data_.back();
-        // }
-
         [[nodiscard]] T pop() {
             std::unique_lock lock(mutex_);
             condition_variable_.wait(lock, [this] { return !data_.empty(); });

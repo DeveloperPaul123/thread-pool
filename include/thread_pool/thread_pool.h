@@ -5,7 +5,6 @@
 #include <future>
 #include <memory>
 #include <queue>
-#include <semaphore>
 #include <thread>
 #include <type_traits>
 
