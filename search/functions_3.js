@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['front_0',['front',['../d7/d54/classdp_1_1thread__safe__queue.html#a2eb44f0530d5b0d56f99c6d51c6fe662',1,'dp::thread_safe_queue']]]
+  ['operator_3d_0',['operator=',['../d8/d6e/classdp_1_1thread__pool.html#a29dc93d784e645778a140acbeae7704b',1,'dp::thread_pool']]]
 ];
