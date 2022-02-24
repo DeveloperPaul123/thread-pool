@@ -35,28 +35,26 @@ namespace dp {
         std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
       public:
-        thread_pool(const unsigned int &number_of_threads = std::thread::hardware_concurrency())
-            : queues_(number_of_threads) {
+        thread_pool(const unsigned int &number_of_threads = std::thread::hardware_concurrency()) {
             for (std::size_t i = 0; i < number_of_threads; ++i) {
-                threads_.emplace_back([&, id = i](std::stop_token stop_tok) {
+                threads_.emplace_back([&](const std::stop_token stop_tok) {
                     do {
                         // check if we have task
-                        if (queues_[id].tasks.empty()) {
+                        if (queue_.empty()) {
                             // no tasks, so we wait instead of spinning
-                            queues_[id].semaphore.acquire();
+                            std::unique_lock lock(condition_mutex_);
+                            condition_.wait(lock, stop_tok, [this]() { return !queue_.empty(); });
                         }
 
                         // ensure we have a task before getting task
-                        // since the dtor releases the semaphore as well
-                        if (!queues_[id].tasks.empty()) {
+                        // since the dtor notifies via the condition variable as well
+                        if (!queue_.empty()) {
                             // get the task
-                            auto &task = queues_[id].tasks.front();
+                            auto task = queue_.pop();
                             // invoke the task
                             std::invoke(std::move(task));
                             // decrement in-flight counter
                             --in_flight_;
-                            // remove task from the queue
-                            queues_[id].tasks.pop();
                         }
                     } while (!stop_tok.stop_requested());
                 });
@@ -70,11 +68,10 @@ namespace dp {
             } while (in_flight_ > 0);
 
             // stop all threads
-            for (std::size_t i = 0; i < threads_.size(); ++i) {
-                threads_[i].request_stop();
-                queues_[i].semaphore.release();
-                threads_[i].join();
+            for (auto &thread : threads_) {
+                thread.request_stop();
             }
+            condition_.notify_all();
         }
 
         /// thread pool is non-copyable
@@ -101,7 +98,7 @@ namespace dp {
              *
              * std::promise<ReturnType> promise;
              * auto future = promise.get_future();
-             * auto task = [func = std::move(f), ... largs = std::move(args),
+             * auto task = [func = std::move(f), ...largs = std::move(args),
                               promise = std::move(promise)]() mutable {...};
              */
             auto shared_promise = std::make_shared<std::promise<ReturnType>>();
@@ -130,22 +127,20 @@ namespace dp {
         }
 
       private:
-        struct task_queue {
-            std::binary_semaphore semaphore{0};
-            dp::thread_safe_queue<FunctionType> tasks{};
-        };
-
         template <typename Function>
         void enqueue_task(Function &&f) {
-            const std::size_t i = count_++ % queues_.size();
             ++in_flight_;
-            queues_[i].tasks.push(std::forward<Function>(f));
-            queues_[i].semaphore.release();
+            {
+                std::lock_guard lock(condition_mutex_);
+                queue_.push(std::forward<Function>(f));
+            }
+            condition_.notify_all();
         }
 
+        std::condition_variable_any condition_;
+        std::mutex condition_mutex_;
         std::vector<std::jthread> threads_;
-        std::deque<task_queue> queues_;
-        std::size_t count_ = 0;
+        dp::thread_safe_queue<FunctionType> queue_;
         std::atomic<int64_t> in_flight_{0};
     };
 
