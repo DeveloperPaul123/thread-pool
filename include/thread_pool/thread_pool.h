@@ -83,11 +83,11 @@ namespace dp {
 
         /**
          * @brief Enqueue a task into the thread pool that returns a result.
-         * @tparam Function An invocable type.
-         * @tparam ...Args Argument parameter pack
+         * @tparam Function An invokable type.
+         * @tparam Args Argument parameter pack
          * @tparam ReturnType The return type of the Function
          * @param f The callable function
-         * @param ...args The parameters that will be passed (copied) to the function.
+         * @param args The parameters that will be passed (copied) to the function.
          * @return A std::future<ReturnType> that can be used to retrieve the returned value.
          */
         template <typename Function, typename... Args,
@@ -117,10 +117,10 @@ namespace dp {
 
         /**
          * @brief Enqueue a task to be executed in the thread pool that returns void.
-         * @tparam Function An invocable type.
-         * @tparam ...Args Argument parameter pack for Function
+         * @tparam Function An invokable type.
+         * @tparam Args Argument parameter pack for Function
          * @param func The callable to be executed
-         * @param ...args Arguments that wiill be passed to the function.
+         * @param args Arguments that will be passed to the function.
          */
         template <typename Function, typename... Args>
         requires std::invocable<Function, Args...> &&
