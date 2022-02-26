@@ -11,8 +11,8 @@
 
 void mandelbrot_threadpool(int image_width, int image_height, int max_iterations,
                            std::string_view output_file_name) {
-    fractal_window<int> source{0, image_width, 0, image_height};
-    fractal_window<double> fract{-2.2, 1.2, -1.7, 1.7};
+    const fractal_window source{0, image_width, 0, image_height};
+    const fractal_window fract{-2.2, 1.2, -1.7, 1.7};
 
     auto complex_func = [](complex z, complex c) -> complex { return z * z + c; };
 
@@ -20,6 +20,7 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
 
     dp::thread_pool pool;
     std::vector<std::future<std::vector<rgb>>> futures;
+    futures.reserve(source.height());
     for (auto row = 0; row < source.height(); row++) {
         auto task = [task_row = row](
                         fractal_window<int> source_window, fractal_window<double> fractal_window,
@@ -44,35 +45,33 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
     std::cout << "mandelbrot completed" << std::endl;
     std::cout << "saving results..." << std::endl;
     // save result
-    save_ppm(source, colors, output_file_name);
+    save_ppm(source.width(), source.height(), colors, output_file_name);
 }
 
 auto main(int argc, char **argv) -> int {
     cxxopts::Options options(*argv, "Generate a mandelbrot ppm image using a thread pool!");
 
-    int image_width;
-    int image_height;
+    int image_size;
     int max_iterations;
     std::string output_file_name;
     // clang-format off
   options.add_options()
     ("h,help", "Show help")
-    ("x,width", "Image width", cxxopts::value(image_width)->default_value("2000"))
-    ("y,height", "Image height", cxxopts::value(image_height)->default_value("2000"))
+    ("s,size", "Image size", cxxopts::value(image_size)->default_value("2000"))
     ("n,iterations", "Max iterations", cxxopts::value(max_iterations)->default_value("30"))
     ("o,filename", "Output file name", cxxopts::value(output_file_name)->default_value("mandelbrot.ppm"))
   ;
     // clang-format on
 
     try {
-        auto result = options.parse(argc, argv);
+        const auto result = options.parse(argc, argv);
 
         if (result.count("help")) {
             std::cout << options.help({"", "Group"}) << std::endl;
             exit(0);
         }
 
-        mandelbrot_threadpool(image_width, image_height, max_iterations, output_file_name);
+        mandelbrot_threadpool(image_size, image_size, max_iterations, output_file_name);
 
     } catch (const cxxopts::OptionException &e) {
         std::cout << "error parsing options: " << e.what() << std::endl;
