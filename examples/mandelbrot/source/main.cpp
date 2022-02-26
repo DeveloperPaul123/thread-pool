@@ -11,8 +11,8 @@
 
 void mandelbrot_threadpool(int image_width, int image_height, int max_iterations,
                            std::string_view output_file_name) {
-    const fractal_window source{0, image_width, 0, image_height};
-    const fractal_window fract{-2.2, 1.2, -1.7, 1.7};
+    const fractal_window<int> source{0, image_width, 0, image_height};
+    const fractal_window<double> fract{-2.2, 1.2, -1.7, 1.7};
 
     auto complex_func = [](complex z, complex c) -> complex { return z * z + c; };
 

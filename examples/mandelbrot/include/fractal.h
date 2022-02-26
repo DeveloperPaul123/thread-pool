@@ -33,7 +33,8 @@ struct fractal_window {
 /// @brief Performs smooth polynomial fitting to the given value.
 rgb get_rgb_smooth(int n, int iter_max);
 
-void save_ppm(const unsigned int& width, const unsigned int& height, std::span<rgb> colors, std::string_view file_name);
+void save_ppm(const unsigned int &width, const unsigned int &height, std::span<rgb> colors,
+              std::string_view file_name);
 /**
  * @brief Convert a pixel coordinate to the complex domain
  * @param scr Source domain (viewing window)

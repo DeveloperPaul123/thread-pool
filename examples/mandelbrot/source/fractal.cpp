@@ -15,7 +15,8 @@ rgb get_rgb_smooth(int n, int iter_max) {
     return {r, g, b};
 }
 
-void save_ppm(const unsigned int& width, const unsigned int& height, std::span<rgb> colors, std::string_view file_name) {
+void save_ppm(const unsigned int& width, const unsigned int& height, std::span<rgb> colors,
+              std::string_view file_name) {
     constexpr auto new_line = '\n';
 
     std::ofstream output_ppm(file_name.data(), std::ios::binary);
@@ -52,7 +53,7 @@ std::vector<rgb> calculate_fractal_row(int row, fractal_window<int> source_windo
                                        std::function<complex(complex, complex)> func) {
     std::vector<rgb> output(source_window.width());
     for (int col = source_window.x_min; col < source_window.x_max; ++col) {
-	    const auto index = col - source_window.x_min;
+        const auto index = col - source_window.x_min;
         complex comp((col), (row));
         comp = scale(source_window, fractal_window, comp);
         const auto value = escape(comp, iter_max, func);
