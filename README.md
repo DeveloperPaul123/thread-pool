@@ -61,7 +61,7 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 
 You can see other examples in the `/examples` folder.
 
-## Buliding
+## Building
 
 This project has been built with:
 
