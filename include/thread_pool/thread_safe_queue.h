@@ -18,7 +18,7 @@ namespace dp {
                 std::lock_guard lock(mutex_);
                 data_.push_back(std::forward<T>(value));
             }
-            condition_variable_.notify_all();
+            condition_variable_.notify_one();
         }
 
         bool empty() {
