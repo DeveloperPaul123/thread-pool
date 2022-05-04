@@ -4,15 +4,42 @@
 #include <iostream>
 #include <string>
 
-TEST_CASE("Basic task return types") {
-    dp::thread_pool pool(2);
-    auto future_value = pool.enqueue([](const int& value) { return value; }, 30);
-    auto future_negative = pool.enqueue([](int x) -> int { return x - 20; }, 3);
+auto multiply(int a, int b) { return a * b; }
 
-    auto value1 = future_value.get();
-    auto value2 = future_negative.get();
-    CHECK(value1 == 30);
-    CHECK(value2 == 3 - 20);
+TEST_CASE("Multiply using global function") {
+    dp::thread_pool pool;
+    auto result = pool.enqueue(multiply, 3, 4);
+    CHECK_EQ(result.get(), 12);
+}
+
+TEST_CASE("Multiply using lambda") {
+    dp::thread_pool pool;
+    auto result = pool.enqueue([](int a, int b) { return a * b; }, 3, 4);
+    CHECK_EQ(result.get(), 12);
+}
+
+TEST_CASE("Multiply with functor") {
+    dp::thread_pool pool;
+    auto result = pool.enqueue(std::multiplies<int>{}, 3, 4);
+    CHECK_EQ(result.get(), 12);
+}
+
+TEST_CASE("Pass references to pool") {
+    int x = 2;
+    {
+        dp::thread_pool pool;
+        pool.enqueue_detach([](int& a) { a = 4; }, std::ref(x));
+    }
+    CHECK_EQ(x, 4);
+}
+
+TEST_CASE("Pass raw reference to pool") {
+    int x = 2;
+    {
+        dp::thread_pool pool;
+        pool.enqueue_detach([](int& a) { a *= 2; }, x);
+    }
+    CHECK_EQ(x, 2);
 }
 
 TEST_CASE("Ensure input params are properly passed") {
@@ -35,14 +62,13 @@ TEST_CASE("Ensure work completes upon destruction") {
     std::atomic<int> counter;
     constexpr auto total_tasks = 20;
     {
-        std::vector<std::future<int>> futures;
         dp::thread_pool pool(4);
         for (auto i = 0; i < total_tasks; i++) {
-            auto task = [index = i, &counter]() {
+            auto task = [i, &counter]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 100));
                 ++counter;
-                return index;
             };
-            futures.push_back(pool.enqueue(task));
+            pool.enqueue_detach(task);
         }
     }
 
@@ -82,4 +108,33 @@ TEST_CASE("Ensure task load is spread evenly across threads") {
      */
     CHECK_LE(duration.count(), 9);
     std::cout << "total duration: " << duration.count() << "\n";
+}
+
+TEST_CASE("Ensure task exception doesn't kill worker thread") {
+    auto throw_task = [](int) -> int { throw std::logic_error("Error occurred."); };
+    auto regular_task = [](int input) -> int { return input * 2; };
+
+    std::atomic_uint_fast64_t count(0);
+
+    auto throw_no_return = []() { throw std::logic_error("Error occurred."); };
+    auto no_throw_no_return = [&count]() {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        count += 1;
+    };
+
+    {
+        dp::thread_pool pool;
+
+        auto throw_future = pool.enqueue(throw_task, 1);
+        auto no_throw_future = pool.enqueue(regular_task, 2);
+
+        CHECK_THROWS(throw_future.get());
+        CHECK_EQ(no_throw_future.get(), 4);
+
+        // do similar check for tasks without return
+        pool.enqueue_detach(throw_no_return);
+        pool.enqueue_detach(no_throw_no_return);
+    }
+
+    CHECK_EQ(count.load(), 1);
 }
