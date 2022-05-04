@@ -12,23 +12,6 @@
 
 namespace dp {
 
-    namespace detail {
-        template <class T>
-        std::decay_t<T> decay_copy(T &&v) {
-            return std::forward<T>(v);
-        }
-
-        // bind F and parameter pack into a nullary one shot. Lambda captures by value.
-        template <typename... Args, typename F>
-        auto bind(F &&f, Args &&...args) {
-            return [f = decay_copy(std::forward<F>(f)),
-                    ... args = decay_copy(std::forward<Args>(args))]() mutable -> decltype(auto) {
-                return std::invoke(std::move(f), std::move(args)...);
-            };
-        }
-
-    }  // namespace detail
-
     template <typename FunctionType = std::function<void()>>
     requires std::invocable<FunctionType> &&
         std::is_same_v<void, std::invoke_result_t<FunctionType>>
@@ -38,39 +21,29 @@ namespace dp {
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 threads_.emplace_back([&](const std::stop_token stop_tok) {
                     do {
-                        // check if we have task
-                        if (queue_.empty()) {
-                            // no tasks, so we wait instead of spinning
-                            std::unique_lock lock(condition_mutex_);
-                            condition_.wait(lock, stop_tok, [this]() { return !queue_.empty(); });
+                        // invoke the task
+                        while (auto task = queue_.pop()) {
+                            try {
+                                std::invoke(std::move(task.value()));
+                            } catch (...) {
+                            }
                         }
 
-                        // ensure we have a task before getting task
-                        // since the dtor notifies via the condition variable as well
-                        if (!queue_.empty()) {
-                            // get the task
-                            auto task = queue_.pop();
-                            // invoke the task
-                            std::invoke(std::move(task));
-                            // decrement in-flight counter
-                            --in_flight_;
-                        }
+                        // no tasks, so we wait instead of spinning
+                        std::unique_lock lock(condition_mutex_);
+                        condition_.wait(lock, stop_tok, [this]() { return !queue_.empty(); });
+
                     } while (!stop_tok.stop_requested());
                 });
             }
         }
 
         ~thread_pool() {
-            // wait for tasks to complete first
-            do {
-                std::this_thread::yield();
-            } while (in_flight_ > 0);
-
             // stop all threads
             for (auto &thread : threads_) {
                 thread.request_stop();
+                thread.join();
             }
-            condition_.notify_all();
         }
 
         /// thread pool is non-copyable
@@ -102,7 +75,13 @@ namespace dp {
              */
             auto shared_promise = std::make_shared<std::promise<ReturnType>>();
             auto task = [func = std::move(f), ... largs = std::move(args),
-                         promise = shared_promise]() { promise->set_value(func(largs...)); };
+                         promise = shared_promise]() {
+                try {
+                    promise->set_value(func(largs...));
+                } catch (...) {
+                    promise->set_exception(std::current_exception());
+                }
+            };
 
             // get the future before enqueuing the task
             auto future = shared_promise->get_future();
@@ -122,25 +101,31 @@ namespace dp {
         requires std::invocable<Function, Args...> &&
             std::is_same_v<void, std::invoke_result_t<Function &&, Args &&...>>
         void enqueue_detach(Function &&func, Args &&...args) {
-            enqueue_task(detail::bind(std::forward<Function>(func), std::forward<Args>(args)...));
+            enqueue_task(
+                std::move([f = std::forward<Function>(func),
+                           ... largs = std::forward<Args>(args)]() mutable -> decltype(auto) {
+                    // suppress exceptions
+                    try {
+                        std::invoke(f, largs...);
+                    } catch (...) {
+                    }
+                }));
         }
 
       private:
         template <typename Function>
         void enqueue_task(Function &&f) {
-            ++in_flight_;
             {
                 std::lock_guard lock(condition_mutex_);
                 queue_.push(std::forward<Function>(f));
             }
-            condition_.notify_all();
+            condition_.notify_one();
         }
 
         std::condition_variable_any condition_;
         std::mutex condition_mutex_;
         std::vector<std::jthread> threads_;
         dp::thread_safe_queue<FunctionType> queue_;
-        std::atomic<int64_t> in_flight_{0};
     };
 
     /**
