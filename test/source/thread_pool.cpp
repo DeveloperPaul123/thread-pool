@@ -58,6 +58,28 @@ TEST_CASE("Ensure input params are properly passed") {
     }
 }
 
+TEST_CASE("Support params of different types") {
+    dp::thread_pool pool{};
+    struct test_struct {
+        int value{};
+        double d_value{};
+    };
+
+    test_struct test;
+
+    auto task = [&test](int x, double y) -> test_struct {
+        test.value = x;
+        test.d_value = y;
+
+        return test_struct{x, y};
+    };
+
+    auto future = pool.enqueue(task, 2, 3.2);
+    const auto result = future.get();
+    CHECK_EQ(result.value, test.value);
+    CHECK_EQ(result.d_value, test.d_value);
+}
+
 TEST_CASE("Ensure work completes upon destruction") {
     std::atomic<int> counter;
     constexpr auto total_tasks = 20;
