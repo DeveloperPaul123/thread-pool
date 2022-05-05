@@ -78,6 +78,7 @@ TEST_CASE("Ensure work completes upon destruction") {
 TEST_CASE("Ensure task load is spread evenly across threads") {
     auto delay_task = [](const std::chrono::seconds& seconds) {
         std::this_thread::sleep_for(seconds);
+        std::cout << std::this_thread::get_id() << " " << std::to_string(seconds.count()) << "\n";
     };
     constexpr auto long_task_time = 6;
     const auto start_time = std::chrono::steady_clock::now();
