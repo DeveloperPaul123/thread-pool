@@ -31,7 +31,10 @@ namespace dp {
 
                         // no tasks, so we wait instead of spinning
                         std::unique_lock lock(condition_mutex_);
-                        condition_.wait(lock, stop_tok, [this]() { return !queue_.empty(); });
+                        condition_.wait(lock, stop_tok, [this]() {
+                            // return false if waiting should continue
+                            return !queue_.empty();
+                        });
 
                     } while (!stop_tok.stop_requested());
                 });

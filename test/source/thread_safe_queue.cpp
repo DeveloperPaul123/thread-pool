@@ -24,7 +24,8 @@ TEST_CASE("Ensure insert and pop works with thread contention") {
     CHECK(res5.has_value());
     CHECK(res6.has_value());
 
-    CHECK_EQ(res4.value(), 1);
-    CHECK_EQ(res5.value(), 2);
-    CHECK_EQ(res6.value(), 3);
+    // we don't know what order that the values were pushed into the queue
+    CHECK_NE(res4.value(), res5.value());
+    CHECK_NE(res5.value(), res6.value());
+    CHECK_NE(res6.value(), res4.value());
 }

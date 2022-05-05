@@ -77,8 +77,11 @@ TEST_CASE("Ensure work completes upon destruction") {
 
 TEST_CASE("Ensure task load is spread evenly across threads") {
     auto delay_task = [](const std::chrono::seconds& seconds) {
+        std::cout << std::this_thread::get_id() << " start : " << std::to_string(seconds.count())
+                  << "\n";
         std::this_thread::sleep_for(seconds);
-        std::cout << std::this_thread::get_id() << " " << std::to_string(seconds.count()) << "\n";
+        std::cout << std::this_thread::get_id() << " end: " << std::to_string(seconds.count())
+                  << "\n";
     };
     constexpr auto long_task_time = 6;
     const auto start_time = std::chrono::steady_clock::now();
@@ -89,7 +92,6 @@ TEST_CASE("Ensure task load is spread evenly across threads") {
             if (i % 4 == 0) {
                 delay_amount = std::chrono::seconds(long_task_time);
             }
-            std::cout << std::to_string(delay_amount.count()) << "\n";
             pool.enqueue_detach(delay_task, delay_amount);
         }
         // wait for tasks to complete
@@ -107,8 +109,8 @@ TEST_CASE("Ensure task load is spread evenly across threads") {
      * --- ******
      * ------
      */
-    CHECK_LE(duration.count(), 9);
     std::cout << "total duration: " << duration.count() << "\n";
+    CHECK_LE(duration.count(), 9);
 }
 
 TEST_CASE("Ensure task exception doesn't kill worker thread") {
