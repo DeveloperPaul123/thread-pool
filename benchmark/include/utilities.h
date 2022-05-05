@@ -27,7 +27,7 @@ using multiplication_pair = std::pair<std::vector<T>, std::vector<T>>;
 
 template <typename T>
 [[nodiscard]] std::vector<multiplication_pair<T>> generate_benchmark_data(
-    const std::size_t& array_size, const std::size_t& number_of_multiplications) {
+    const std::int64_t& array_size, const std::int64_t& number_of_multiplications) {
     static std::uniform_int_distribution<T> distribution(std::numeric_limits<T>::min(),
                                                          std::numeric_limits<T>::max());
     static std::default_random_engine generator;
@@ -35,7 +35,7 @@ template <typename T>
     std::vector<multiplication_pair<T>> computations;
     computations.reserve(number_of_multiplications);
 
-    for (std::size_t i = 0; i < number_of_multiplications; ++i) {
+    for (auto i = 0; i < number_of_multiplications; ++i) {
         multiplication_pair<T> pr{};
         pr.first.reserve(array_size * array_size);
         pr.second.reserve(array_size);
