@@ -22,7 +22,6 @@ static void BM_array_multiplication_std_async(benchmark::State& state) {
     results.reserve(computations.size());
 
     for (auto _ : state) {
-        
         for (const auto& mult : computations) {
             // let std async decide on how to launch the task, either deferred or async
             results.emplace_back(std::async(thread_task, mult));

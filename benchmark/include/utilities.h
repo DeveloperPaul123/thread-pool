@@ -1,11 +1,11 @@
 #pragma once
 
-#include <span>
-#include <vector>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <random>
+#include <span>
+#include <vector>
 
 inline std::size_t index(std::size_t row, std::size_t col, std::size_t width) {
     return row * width + col;

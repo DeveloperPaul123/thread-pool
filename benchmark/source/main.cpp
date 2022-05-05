@@ -1,4 +1,5 @@
 #include <benchmark/benchmark.h>
+
 #include <array>
 
 #include "utilities.h"
