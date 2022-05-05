@@ -9,16 +9,15 @@ include(../cmake/tools.cmake)
 include(../cmake/CPM.cmake)
 
 CPMAddPackage(
-  NAME benchmark
-  GITHUB_REPOSITORY google/benchmark
-  VERSION 1.6.1
-  OPTIONS
-   "BENCHMARK_ENABLE_TESTING OFF"
+    NAME benchmark
+    GITHUB_REPOSITORY google/benchmark
+    VERSION 1.6.1
+    OPTIONS "BENCHMARK_ENABLE_TESTING OFF"
 )
 
-if (benchmark_ADDED)
-  # patch benchmark target
-  set_target_properties(benchmark PROPERTIES CXX_STANDARD 20)
+if(benchmark_ADDED)
+    # patch benchmark target
+    set_target_properties(benchmark PROPERTIES CXX_STANDARD 20)
 endif()
 
 # ---- Create binary ----
