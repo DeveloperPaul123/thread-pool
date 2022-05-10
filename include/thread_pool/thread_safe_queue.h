@@ -1,8 +1,8 @@
 #pragma once
 
-#include <condition_variable>
 #include <deque>
 #include <mutex>
+#include <optional>
 
 namespace dp {
     template <typename T>
@@ -14,26 +14,19 @@ namespace dp {
         thread_safe_queue() = default;
 
         void push(T&& value) {
-            {
-                std::lock_guard lock(mutex_);
-                data_.push_back(std::forward<T>(value));
-            }
-            condition_variable_.notify_all();
+            std::lock_guard lock(mutex_);
+            data_.push_back(std::forward<T>(value));
         }
 
-        bool empty() {
+        [[nodiscard]] bool empty() const {
             std::lock_guard lock(mutex_);
             return data_.empty();
         }
 
-        [[nodiscard]] size_type size() {
+        [[nodiscard]] std::optional<T> pop() {
             std::lock_guard lock(mutex_);
-            return data_.size();
-        }
+            if (data_.empty()) return std::nullopt;
 
-        [[nodiscard]] T pop() {
-            std::unique_lock lock(mutex_);
-            condition_variable_.wait(lock, [this] { return !data_.empty(); });
             auto front = data_.front();
             data_.pop_front();
             return front;
@@ -41,8 +34,7 @@ namespace dp {
 
       private:
         using mutex_type = std::mutex;
-        std::deque<T> data_;
+        std::deque<T> data_{};
         mutable mutex_type mutex_{};
-        std::condition_variable condition_variable_{};
     };
 }  // namespace dp

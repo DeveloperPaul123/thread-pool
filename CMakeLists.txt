@@ -71,6 +71,7 @@ packageProject(
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
 option(TP_BUILD_EXAMPLES "Turn on to build examples." ON)
+option(TP_BUILD_BENCHMARKS "Turn on to build benchmarks." ON)
 
 if(${TP_BUILD_TESTS})
     enable_testing()
@@ -78,4 +79,7 @@ if(${TP_BUILD_TESTS})
 endif()
 if(${TP_BUILD_EXAMPLES})
     add_subdirectory(examples)
+endif()
+if(${TP_BUILD_BENCHMARKS})
+    add_subdirectory(benchmark)
 endif()
