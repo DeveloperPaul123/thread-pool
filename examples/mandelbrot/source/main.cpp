@@ -1,5 +1,6 @@
 #include <thread_pool/thread_pool.h>
 
+#include <chrono>
 #include <cxxopts.hpp>
 #include <filesystem>
 #include <fstream>
@@ -21,6 +22,8 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
     dp::thread_pool pool;
     std::vector<std::future<std::vector<rgb>>> futures;
     futures.reserve(source.height());
+    const auto start = std::chrono::steady_clock::now();
+
     for (auto row = 0; row < source.height(); row++) {
         auto task = [task_row = row](
                         fractal_window<int> source_window, fractal_window<double> fractal_window,
@@ -42,7 +45,11 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
         colors.insert(colors.end(), data.begin(), data.end());
     }
 
-    std::cout << "mandelbrot completed" << std::endl;
+    const auto end = std::chrono::steady_clock::now();
+    const auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    std::cout << "mandelbrot completed: " << duration << std::endl;
     std::cout << "saving results..." << std::endl;
     // save result
     save_ppm(source.width(), source.height(), colors, output_file_name);
