@@ -61,6 +61,32 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 
 You can see other examples in the `/examples` folder.
 
+## Benchmarks 
+
+See the `./benchmark` folder for the benchmark code. The benchmarks are set up to compare matrix multiplication using the `dp::thread_pool` versus `std::async`. A summary of the comparisons is below. Benchmarks were run using the `windows-release` CMake preset (see `CMakePresets.json`).
+
+### Machine Specs
+
+* AMD Ryzen 7 1800X (16 X 3593 MHz CPUs)
+* CPU Caches:
+  * L1 Data 32 KiB (x8)
+  * L1 Instruction 64 KiB (x8)
+  * L2 Unified 512 KiB (x8)
+  * L3 Unified 8192 KiB (x2)
+* 32 GB RAM
+
+### Summary of Results
+
+Matrix sizes are all square (MxM). Each multiplication is `(MxM) * (MxM)` where `*` refers to a matrix multiplication operation.
+
+| Matrix Size | Number of multiplications | `std::async` time (ms) | `dp::thread_pool` time (ms) |
+|:---:|:---:|:---:|:---:|
+| 8 | 25,000 | 77.9 | 198 |
+| 64 | 5,000 | 100 | 84.9 |
+| 256 | 250 | 295 | 59.0 |
+| 512 | 75 | 713 | 69.3 |
+| 1024 | 10 | 1160 | 73.8 |
+
 ## Building
 
 This project has been built with:
