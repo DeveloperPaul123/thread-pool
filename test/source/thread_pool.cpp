@@ -24,15 +24,6 @@ TEST_CASE("Multiply with functor") {
     CHECK_EQ(result.get(), 12);
 }
 
-TEST_CASE("Pass references to pool") {
-    int x = 2;
-    {
-        dp::thread_pool pool;
-        pool.enqueue_detach([](int& a) { a = 4; }, std::ref(x));
-    }
-    CHECK_EQ(x, 4);
-}
-
 TEST_CASE("Pass raw reference to pool") {
     int x = 2;
     {
