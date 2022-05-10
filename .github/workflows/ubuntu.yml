@@ -60,5 +60,8 @@ jobs:
         run: |
           cd build
           ctest --build-config Debug
-          cd ../build-clang
+
+      - name: test clang
+        run: |
+          cd build-clang
           ctest --build-config Debug
