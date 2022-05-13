@@ -77,15 +77,15 @@ See the `./benchmark` folder for the benchmark code. The benchmarks are set up t
 
 ### Summary of Results
 
-Matrix sizes are all square (MxM). Each multiplication is `(MxM) * (MxM)` where `*` refers to a matrix multiplication operation.
+Matrix sizes are all square (MxM). Each multiplication is `(MxM) * (MxM)` where `*` refers to a matrix multiplication operation. Times recorded were the best of at least 3 runs.
 
 | Matrix Size | Number of multiplications | `std::async` time (ms) | `dp::thread_pool` time (ms) |
 |:---:|:---:|:---:|:---:|
-| 8 | 25,000 | 77.9 | 198 |
-| 64 | 5,000 | 100 | 84.9 |
-| 256 | 250 | 295 | 59.0 |
-| 512 | 75 | 713 | 69.3 |
-| 1024 | 10 | 1160 | 73.8 |
+| 8 | 25,000 | 77.9 | 65.3 |
+| 64 | 5,000 | 100 | 65.2 |
+| 256 | 250 | 295 | 59.2 |
+| 512 | 75 | 713 | 60.4 |
+| 1024 | 10 | 1160 | 55.8 |
 
 ## Building
 
