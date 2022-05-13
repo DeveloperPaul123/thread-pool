@@ -30,15 +30,16 @@ template <typename T>
     const std::int64_t& array_size, const std::int64_t& number_of_multiplications) {
     static std::uniform_int_distribution<T> distribution(std::numeric_limits<T>::min(),
                                                          std::numeric_limits<T>::max());
-    static std::default_random_engine generator;
+    static std::default_random_engine generator{};
 
     std::vector<multiplication_pair<T>> computations;
     computations.reserve(number_of_multiplications);
 
+    const auto total_size = array_size * array_size;
     for (auto i = 0; i < number_of_multiplications; ++i) {
         multiplication_pair<T> pr{};
-        pr.first.reserve(array_size * array_size);
-        pr.second.reserve(array_size);
+        pr.first.reserve(total_size);
+        pr.second.reserve(total_size);
 
         std::generate_n(std::back_inserter(pr.first), array_size * array_size,
                         []() { return distribution(generator); });
