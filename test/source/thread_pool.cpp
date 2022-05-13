@@ -24,15 +24,6 @@ TEST_CASE("Multiply with functor") {
     CHECK_EQ(result.get(), 12);
 }
 
-TEST_CASE("Pass references to pool") {
-    int x = 2;
-    {
-        dp::thread_pool pool;
-        pool.enqueue_detach([](int& a) { a = 4; }, std::ref(x));
-    }
-    CHECK_EQ(x, 4);
-}
-
 TEST_CASE("Pass raw reference to pool") {
     int x = 2;
     {
@@ -132,7 +123,10 @@ TEST_CASE("Ensure task load is spread evenly across threads") {
      * ------
      */
     std::cout << "total duration: " << duration.count() << "\n";
-    CHECK_LE(duration.count(), 9);
+    // worst case is the same thread doing the long task back to back. Tasks are assigned
+    // sequentially in the thread pool so this would be the default execution if there was no work
+    // stealing.
+    CHECK_LT(duration.count(), long_task_time * 2);
 }
 
 TEST_CASE("Ensure task exception doesn't kill worker thread") {

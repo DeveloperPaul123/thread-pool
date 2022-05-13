@@ -32,6 +32,15 @@ namespace dp {
             return front;
         }
 
+        [[nodiscard]] std::optional<T> steal() {
+            std::lock_guard lock(mutex_);
+            if (data_.empty()) return std::nullopt;
+
+            auto back = data_.back();
+            data_.pop_back();
+            return back;
+        }
+
       private:
         using mutex_type = std::mutex;
         std::deque<T> data_{};
