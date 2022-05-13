@@ -33,10 +33,9 @@ namespace dp {
                         }
 
                         // try to steal a task
-                        for (std::size_t thread_index = id + 1 % tasks_.size();
-                             thread_index < tasks_.size(); ++thread_index) {
-                            if (thread_index == id) continue;
-                            if (auto task = tasks_[thread_index].tasks.steal()) {
+                        for (std::size_t j = 1; j < tasks_.size(); ++j) {
+                            const std::size_t index = (id + j) % tasks_.size();
+                            if (auto task = tasks_[index].tasks.steal()) {
                                 std::invoke(std::move(task.value()));
                             }
                         }
