@@ -125,10 +125,43 @@ Usage</h2>
 <div class="line">pool.enqueue_detach([](<span class="keywordtype">int</span> value) { <span class="comment">/*...your task...*/</span> }, 37);</div>
 <div class="line">pool.enqueue_detach([](<span class="keywordtype">int</span> value) { <span class="comment">/*...your task...*/</span> }, 38);</div>
 <div class="line"><span class="comment">// and so on..</span></div>
-<div class="ttc" id="aclassdp_1_1thread__pool_html"><div class="ttname"><a href="d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool</a></div><div class="ttdef"><b>Definition:</b> thread_pool.h:35</div></div>
+<div class="ttc" id="aclassdp_1_1thread__pool_html"><div class="ttname"><a href="d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool</a></div><div class="ttdef"><b>Definition:</b> thread_pool.h:20</div></div>
 </div><!-- fragment --><p >You can see other examples in the <code>/examples</code> folder.</p>
 <h2><a class="anchor" id="autotoc_md4"></a>
-Buliding</h2>
+Benchmarks</h2>
+<p >See the <code>./benchmark</code> folder for the benchmark code. The benchmarks are set up to compare matrix multiplication using the <code><a class="el" href="d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool</a></code> versus <code>std::async</code>. A summary of the comparisons is below. Benchmarks were run using the <code>windows-release</code> CMake preset (see <code>CMakePresets.json</code>).</p>
+<h3><a class="anchor" id="autotoc_md5"></a>
+Machine Specs</h3>
+<ul>
+<li>AMD Ryzen 7 1800X (16 X 3593 MHz CPUs)</li>
+<li>CPU Caches:<ul>
+<li>L1 Data 32 KiB (x8)</li>
+<li>L1 Instruction 64 KiB (x8)</li>
+<li>L2 Unified 512 KiB (x8)</li>
+<li>L3 Unified 8192 KiB (x2)</li>
+</ul>
+</li>
+<li>32 GB RAM</li>
+</ul>
+<h3><a class="anchor" id="autotoc_md6"></a>
+Summary of Results</h3>
+<p >Matrix sizes are all square (MxM). Each multiplication is <code>(MxM) * (MxM)</code> where <code>*</code> refers to a matrix multiplication operation. Times recorded were the best of at least 3 runs.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadCenter">Matrix Size   </th><th class="markdownTableHeadCenter">Number of multiplications   </th><th class="markdownTableHeadCenter"><code>std::async</code> time (ms)   </th><th class="markdownTableHeadCenter"><code><a class="el" href="d8/d6e/classdp_1_1thread__pool.html">dp::thread_pool</a></code> time (ms)    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyCenter">8   </td><td class="markdownTableBodyCenter">25,000   </td><td class="markdownTableBodyCenter">77.9   </td><td class="markdownTableBodyCenter">65.3    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyCenter">64   </td><td class="markdownTableBodyCenter">5,000   </td><td class="markdownTableBodyCenter">100   </td><td class="markdownTableBodyCenter">65.2    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyCenter">256   </td><td class="markdownTableBodyCenter">250   </td><td class="markdownTableBodyCenter">295   </td><td class="markdownTableBodyCenter">59.2    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyCenter">512   </td><td class="markdownTableBodyCenter">75   </td><td class="markdownTableBodyCenter">713   </td><td class="markdownTableBodyCenter">60.4    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyCenter">1024   </td><td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">1160   </td><td class="markdownTableBodyCenter">55.8   </td></tr>
+</table>
+<h2><a class="anchor" id="autotoc_md7"></a>
+Building</h2>
 <p >This project has been built with:</p>
 <ul>
 <li>Visual Studio 2022</li>
@@ -139,7 +172,7 @@ Buliding</h2>
 <p >To build, run:</p>
 <div class="fragment"><div class="line">cmake -S . -B build</div>
 <div class="line">cmake --build build</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md5"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md8"></a>
 Build Options</h3>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -149,7 +182,7 @@ Build Options</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyLeft"><code>TP_BUILD_EXAMPLES</code>   </td><td class="markdownTableBodyLeft">Turn on to build examples   </td><td class="markdownTableBodyCenter">ON   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md6"></a>
+<h3><a class="anchor" id="autotoc_md9"></a>
 Run clang-format</h3>
 <p >Use the following commands from the project's root directory to check and fix C++ and CMake source style. This requires <em>clang-format</em>, <em>cmake-format</em> and <em>pyyaml</em> to be installed on the current system. To use this feature you must turn on <code>TP_BUILD_TESTS</code>.</p>
 <div class="fragment"><div class="line"># view changes</div>
@@ -158,7 +191,7 @@ Run clang-format</h3>
 <div class="line"># apply changes</div>
 <div class="line">cmake --build build/test --target fix-format</div>
 </div><!-- fragment --><p >See <a href="https://github.com/TheLartians/Format.cmake">Format.cmake</a> for details.</p>
-<h3><a class="anchor" id="autotoc_md7"></a>
+<h3><a class="anchor" id="autotoc_md10"></a>
 Build the documentation</h3>
 <p >The documentation is automatically built and <a href="https://developerpaul123.github.io/thread-pool">published</a> whenever a <a href="https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository">GitHub Release</a> is created. To manually build documentation, call the following command.</p>
 <div class="fragment"><div class="line">cmake -S documentation -B build/doc</div>
@@ -166,13 +199,13 @@ Build the documentation</h3>
 <div class="line"># view the docs</div>
 <div class="line">open build/doc/doxygen/html/index.html</div>
 </div><!-- fragment --><p >To build the documentation locally, you will need Doxygen and Graphviz on your system.</p>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Contributing</h2>
 <p >Contributions are very welcome. Please see contribution guidelines for more info.</p>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 License</h2>
 <p >The project is licensed under the MIT license. See [LICENSE](LICENSE) for more details.</p>
-<h2><a class="anchor" id="autotoc_md10"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Author</h2>
 <p >| <a href="https://github.com/DeveloperPaul123">&lt;img src="https://avatars0.githubusercontent.com/u/6591180?s=460&amp;v=4" width="100"&gt;<br  />
 <sub>@DeveloperPaul123</sub></a> | |:-&mdash;:| </p>

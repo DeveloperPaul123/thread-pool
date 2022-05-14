@@ -31,19 +31,19 @@ var NAVTREE =
         [ "CMake", "index.html#autotoc_md2", null ]
       ] ],
       [ "Usage", "index.html#autotoc_md3", null ],
-      [ "Buliding", "index.html#autotoc_md4", [
-        [ "Build Options", "index.html#autotoc_md5", null ],
-        [ "Run clang-format", "index.html#autotoc_md6", null ],
-        [ "Build the documentation", "index.html#autotoc_md7", null ]
+      [ "Benchmarks", "index.html#autotoc_md4", [
+        [ "Machine Specs", "index.html#autotoc_md5", null ],
+        [ "Summary of Results", "index.html#autotoc_md6", null ]
       ] ],
-      [ "Contributing", "index.html#autotoc_md8", null ],
-      [ "License", "index.html#autotoc_md9", null ],
-      [ "Author", "index.html#autotoc_md10", null ],
-      [ "Namespace List", "namespaces.html", "namespaces_dup" ],
-      [ "Namespace Members", "namespacemembers.html", [
-        [ "All", "namespacemembers.html", null ],
-        [ "Functions", "namespacemembers_func.html", null ]
-      ] ]
+      [ "Building", "index.html#autotoc_md7", [
+        [ "Build Options", "index.html#autotoc_md8", null ],
+        [ "Run clang-format", "index.html#autotoc_md9", null ],
+        [ "Build the documentation", "index.html#autotoc_md10", null ]
+      ] ],
+      [ "Contributing", "index.html#autotoc_md11", null ],
+      [ "License", "index.html#autotoc_md12", null ],
+      [ "Author", "index.html#autotoc_md13", null ],
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

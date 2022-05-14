@@ -85,16 +85,17 @@ $(document).ready(function(){initNavTree('d3/dec/thread__pool_8h.html','../../')
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle"><div class="title">thread_pool.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;concepts&gt;</code><br />
+<div class="textblock"><code>#include &lt;atomic&gt;</code><br />
+<code>#include &lt;concepts&gt;</code><br />
+<code>#include &lt;deque&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;future&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
-<code>#include &lt;queue&gt;</code><br />
+<code>#include &lt;semaphore&gt;</code><br />
 <code>#include &lt;thread&gt;</code><br />
 <code>#include &lt;type_traits&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../dd/df9/thread__safe__queue_8h_source.html">thread_pool/thread_safe_queue.h</a>&quot;</code><br />
@@ -116,17 +117,6 @@ Classes</h2></td></tr>
 Namespaces</h2></td></tr>
 <tr class="memitem:df/d88/namespacedp"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d88/namespacedp.html">dp</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:d9/d9b/namespacedp_1_1detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d9b/namespacedp_1_1detail.html">dp::detail</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:af04024d554c291bd17a1ee783321bbc7"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:af04024d554c291bd17a1ee783321bbc7"><td class="memTemplItemLeft" align="right" valign="top">std::decay_t&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d9/d9b/namespacedp_1_1detail.html#af04024d554c291bd17a1ee783321bbc7">dp::detail::decay_copy</a> (T &amp;&amp;v)</td></tr>
-<tr class="separator:af04024d554c291bd17a1ee783321bbc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d3be32d4c899f2bf8acb47ff1e6c3f1"><td class="memTemplParams" colspan="2">template&lt;typename... Args, typename F &gt; </td></tr>
-<tr class="memitem:a7d3be32d4c899f2bf8acb47ff1e6c3f1"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d9/d9b/namespacedp_1_1detail.html#a7d3be32d4c899f2bf8acb47ff1e6c3f1">dp::detail::bind</a> (F &amp;&amp;f, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a7d3be32d4c899f2bf8acb47ff1e6c3f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

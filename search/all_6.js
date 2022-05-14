@@ -1,5 +1,9 @@
 var searchData=
 [
-  ['size_0',['size',['../d7/d54/classdp_1_1thread__safe__queue.html#a9c1ed1edc60c6f4c7f2f47692a11b120',1,'dp::thread_safe_queue']]],
-  ['size_5ftype_1',['size_type',['../d7/d54/classdp_1_1thread__safe__queue.html#ab95ecc1ae8809eb2f8fdbfc321dec746',1,'dp::thread_safe_queue']]]
+  ['thread_2dpool_0',['thread-pool',['../index.html',1,'']]],
+  ['thread_5fpool_1',['thread_pool',['../d8/d6e/classdp_1_1thread__pool.html',1,'dp::thread_pool&lt; FunctionType &gt;'],['../d8/d6e/classdp_1_1thread__pool.html#a43902f687da38b7a21544e591ff314bc',1,'dp::thread_pool::thread_pool(const unsigned int &amp;number_of_threads=std::thread::hardware_concurrency())'],['../d8/d6e/classdp_1_1thread__pool.html#aa9ddbc3eefde629ba4d6690276ba3c6e',1,'dp::thread_pool::thread_pool(const thread_pool &amp;)=delete']]],
+  ['thread_5fpool_2eh_2',['thread_pool.h',['../d3/dec/thread__pool_8h.html',1,'']]],
+  ['thread_5fsafe_5fqueue_3',['thread_safe_queue',['../d7/d54/classdp_1_1thread__safe__queue.html',1,'dp::thread_safe_queue&lt; T &gt;'],['../d7/d54/classdp_1_1thread__safe__queue.html#a51e5d692308dd77a2be1c896b118cd40',1,'dp::thread_safe_queue::thread_safe_queue()']]],
+  ['thread_5fsafe_5fqueue_2eh_4',['thread_safe_queue.h',['../dd/df9/thread__safe__queue_8h.html',1,'']]],
+  ['thread_5fsafe_5fqueue_3c_20functiontype_20_3e_5',['thread_safe_queue&lt; FunctionType &gt;',['../d7/d54/classdp_1_1thread__safe__queue.html',1,'dp']]]
 ];
