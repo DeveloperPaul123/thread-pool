@@ -73,7 +73,7 @@ TEST_CASE("Support params of different types") {
 
 TEST_CASE("Ensure work completes upon destruction") {
     std::atomic<int> counter;
-    constexpr auto total_tasks = 20;
+    constexpr auto total_tasks = 30;
     {
         dp::thread_pool pool(4);
         for (auto i = 0; i < total_tasks; i++) {
