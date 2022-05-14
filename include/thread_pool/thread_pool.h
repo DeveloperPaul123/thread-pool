@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <concepts>
 #include <deque>
 #include <functional>
@@ -24,25 +25,29 @@ namespace dp {
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 threads_.emplace_back([&, id = i](const std::stop_token &stop_tok) {
                     do {
-                        // invoke the task
-                        while (auto task = tasks_[id].tasks.pop()) {
-                            try {
-                                std::invoke(std::move(task.value()));
-                            } catch (...) {
-                            }
-                        }
-
-                        // try to steal a task
-                        for (std::size_t j = 1; j < tasks_.size(); ++j) {
-                            const std::size_t index = (id + j) % tasks_.size();
-                            if (auto task = tasks_[index].tasks.steal()) {
-                                std::invoke(std::move(task.value()));
-                            }
-                        }
-
-                        // no tasks, so we wait instead of spinning
+                        // wait until signaled
                         tasks_[id].signal.acquire();
 
+                        do {
+                            // invoke the task
+                            while (auto task = tasks_[id].tasks.pop()) {
+                                try {
+                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
+                                    std::invoke(std::move(task.value()));
+                                } catch (...) {
+                                }
+                            }
+
+                            // try to steal a task
+                            for (std::size_t j = 1; j < tasks_.size(); ++j) {
+                                const std::size_t index = (id + j) % tasks_.size();
+                                if (auto task = tasks_[index].tasks.steal()) {
+                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
+                                    std::invoke(std::move(task.value()));
+                                }
+                            }
+
+                        } while (pending_tasks_.load(std::memory_order_acquire) > 0);
                     } while (!stop_tok.stop_requested());
                 });
             }
@@ -127,6 +132,7 @@ namespace dp {
         template <typename Function>
         void enqueue_task(Function &&f) {
             const std::size_t i = count_++ % tasks_.size();
+            pending_tasks_.fetch_add(1, std::memory_order_relaxed);
             tasks_[i].tasks.push(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
@@ -139,6 +145,7 @@ namespace dp {
         std::vector<std::jthread> threads_;
         std::deque<task_item> tasks_;
         std::size_t count_{};
+        std::atomic_int_fast64_t pending_tasks_{};
     };
 
     /**
