@@ -27,7 +27,7 @@ namespace dp {
             std::lock_guard lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
-            auto front = data_.front();
+            auto front = std::move(data_.front());
             data_.pop_front();
             return front;
         }
@@ -36,7 +36,7 @@ namespace dp {
             std::lock_guard lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
-            auto back = data_.back();
+            auto back = std::move(data_.back());
             data_.pop_back();
             return back;
         }
