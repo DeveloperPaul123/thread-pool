@@ -23,33 +23,40 @@ namespace dp {
             const unsigned int &number_of_threads = std::thread::hardware_concurrency())
             : tasks_(number_of_threads) {
             for (std::size_t i = 0; i < number_of_threads; ++i) {
-                threads_.emplace_back([&, id = i](const std::stop_token &stop_tok) {
-                    do {
-                        // wait until signaled
-                        tasks_[id].signal.acquire();
-
+                try {
+                    threads_.emplace_back([&, id = i](const std::stop_token &stop_tok) {
                         do {
-                            // invoke the task
-                            while (auto task = tasks_[id].tasks.pop()) {
-                                try {
-                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
-                                    std::invoke(std::move(task.value()));
-                                } catch (...) {
-                                }
-                            }
+                            // wait until signaled
+                            tasks_[id].signal.acquire();
 
-                            // try to steal a task
-                            for (std::size_t j = 1; j < tasks_.size(); ++j) {
-                                const std::size_t index = (id + j) % tasks_.size();
-                                if (auto task = tasks_[index].tasks.steal()) {
-                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
-                                    std::invoke(std::move(task.value()));
+                            do {
+                                // invoke the task
+                                while (auto task = tasks_[id].tasks.pop()) {
+                                    try {
+                                        pending_tasks_.fetch_sub(1, std::memory_order_release);
+                                        std::invoke(std::move(task.value()));
+                                    } catch (...) {
+                                    }
                                 }
-                            }
 
-                        } while (pending_tasks_.load(std::memory_order_acquire) > 0);
-                    } while (!stop_tok.stop_requested());
-                });
+                                // try to steal a task
+                                for (std::size_t j = 1; j < tasks_.size(); ++j) {
+                                    const std::size_t index = (id + j) % tasks_.size();
+                                    if (auto task = tasks_[index].tasks.steal()) {
+                                        // steal a task
+                                        pending_tasks_.fetch_sub(1, std::memory_order_release);
+                                        std::invoke(std::move(task.value()));
+                                        // stop stealing once we have invoked a stolen task
+                                        break;
+                                    }
+                                }
+
+                            } while (pending_tasks_.load(std::memory_order_acquire) > 0);
+                        } while (!stop_tok.stop_requested());
+                    });
+                } catch (...) {
+                    // catch all
+                }
             }
         }
 
