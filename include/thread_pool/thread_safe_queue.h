@@ -1,11 +1,26 @@
 #pragma once
 
+#include <concepts>
 #include <deque>
 #include <mutex>
 #include <optional>
 
 namespace dp {
-    template <typename T>
+    /**
+     * @brief Simple concept for the Lockable and Basic Lockable types as defined by the C++
+     * standard.
+     * @details See https://en.cppreference.com/w/cpp/named_req/Lockable and
+     * https://en.cppreference.com/w/cpp/named_req/BasicLockable for details.
+     */
+    template <typename Lock>
+    concept is_lockable = requires(Lock&& lock) {
+        lock.lock();
+        lock.unlock();
+        { lock.try_lock() } -> std::convertible_to<bool>;
+    };
+
+    template <typename T, typename Lock = std::mutex>
+    requires is_lockable<Lock>
     class thread_safe_queue {
       public:
         using value_type = T;
@@ -42,8 +57,7 @@ namespace dp {
         }
 
       private:
-        using mutex_type = std::mutex;
         std::deque<T> data_{};
-        mutable mutex_type mutex_{};
+        mutable Lock mutex_{};
     };
 }  // namespace dp

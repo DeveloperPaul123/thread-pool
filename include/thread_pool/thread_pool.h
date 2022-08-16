@@ -13,8 +13,22 @@
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
+    namespace details {
+        // leave clang detection out for now as there is not support for std::move_only_function
+#if defined(__GNUC__) && !defined(__clang_major__)
+#    define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#else
+#    define GCC_VERSION 0
+#endif
+#if (defined(_MSC_VER) && (_MSC_VER >= 1930) && (_MSVC_LANG > 202002L))  || (GCC_VERSION >= 120000)
+#    define TP_HAS_MOVE_ONLY_FUNCTION_SUPPORT
+        using default_function_type = std::move_only_function<void()>;
+#else
+        using default_function_type = std::function<void()>;
+#endif
+    }  // namespace details
 
-    template <typename FunctionType = std::function<void()>>
+    template <typename FunctionType = details::default_function_type>
     requires std::invocable<FunctionType> &&
         std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
@@ -86,6 +100,21 @@ namespace dp {
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
         requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
+#ifdef TP_HAS_MOVE_ONLY_FUNCTION_SUPPORT
+            // we can do this in C++23 because we now have support for move only functions
+            std::promise<ReturnType> promise;
+            auto future = promise.get_future();
+            auto task = [func = std::move(f), ... largs = std::move(args),
+                         promise = std::move(promise)]() mutable {
+                try {
+                    promise.set_value(func(largs...));
+                } catch (...) {
+                    promise.set_exception(std::current_exception());
+                }
+            };
+            enqueue_task(std::move(task));
+            return future;
+#else
             /*
              * use shared promise here so that we don't break the promise later (until C++23)
              *
@@ -111,6 +140,7 @@ namespace dp {
             // enqueue the task
             enqueue_task(std::move(task));
             return future;
+#endif
         }
 
         /**

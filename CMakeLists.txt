@@ -9,7 +9,8 @@ project(
     LANGUAGES CXX
 )
 
-# ---- Include guards ----
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(
@@ -38,7 +39,20 @@ find_package(Threads REQUIRED)
 
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(dp::thread-pool ALIAS ${PROJECT_NAME})
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+
+if((MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.32) 
+    OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
+    option(TP_EXPERIMENTAL "Turn on experimental C++23 feature support" ON)
+endif()
+
+if(DEFINED TP_EXPERIMENTAL AND TP_EXPERIMENTAL)
+    message(STATUS "Using experimental C++23 features.")
+    target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
+else()
+    target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+endif()
 
 target_link_libraries(${PROJECT_NAME} INTERFACE Threads::Threads)
 
