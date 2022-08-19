@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <concepts>
+#include <coroutine>
 #include <deque>
 #include <functional>
 #include <future>
@@ -158,6 +159,26 @@ namespace dp {
                     } catch (...) {
                     }
                 }));
+        }
+
+        /**
+         * @brief Allows you to schedule coroutines to run on the thread pool. 
+         */
+        auto schedule() {
+            /// @brief Simple awaitable type that we can return.
+            struct scheduled_operation {
+                dp::thread_pool<> *thread_pool_;
+                bool await_ready() { return false; };
+                void await_suspend(std::coroutine_handle<> handle) {
+                    if (thread_pool_) {
+                        thread_pool_->enqueue_detach([](std::coroutine_handle<> h) { h.resume(); },
+                                                     handle);
+                    }
+                }
+                void await_resume() {}
+            };
+
+            return scheduled_operation{this};
         }
 
       private:
