@@ -15,6 +15,12 @@ CPMAddPackage(
     OPTIONS "BENCHMARK_ENABLE_TESTING OFF"
 )
 
+CPMAddPackage(
+    NAME cppcoro
+    GITHUB_REPOSITORY andreasbuhr/cppcoro
+    GIT_TAG 10bbcdbf2be3ad3aa56febcf4c7662d771460a99
+)
+
 if(benchmark_ADDED)
     # patch benchmark target
     set_target_properties(benchmark PROPERTIES CXX_STANDARD 20)
@@ -26,7 +32,7 @@ file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
 file(GLOB headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 add_executable(${PROJECT_NAME} ${headers} ${sources})
-target_link_libraries(${PROJECT_NAME} benchmark ThreadPool::ThreadPool)
+target_link_libraries(${PROJECT_NAME} benchmark ThreadPool::ThreadPool cppcoro)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
