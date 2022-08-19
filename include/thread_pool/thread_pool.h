@@ -20,7 +20,7 @@ namespace dp {
 #else
 #    define GCC_VERSION 0
 #endif
-#if (defined(_MSC_VER) && (_MSC_VER >= 1930) && (_MSVC_LANG > 202002L))  || (GCC_VERSION >= 120000)
+#if (defined(_MSC_VER) && (_MSC_VER >= 1930) && (_MSVC_LANG > 202002L)) || (GCC_VERSION >= 120000)
 #    define TP_HAS_MOVE_ONLY_FUNCTION_SUPPORT
         using default_function_type = std::move_only_function<void()>;
 #else
