@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-# ---- Project ----
-
-# Note: update this to your new project's name and version
 project(
     ThreadPool
     VERSION 0.4.1
@@ -60,6 +57,8 @@ target_link_libraries(${PROJECT_NAME} INTERFACE Threads::Threads)
 
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
+target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fcoroutines>")
+target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,Clang>:-fcoroutines-ts>")
 
 target_include_directories(
     ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
