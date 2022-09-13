@@ -157,3 +157,24 @@ TEST_CASE("Ensure task exception doesn't kill worker thread") {
 
     CHECK_EQ(count.load(), 1);
 }
+
+TEST_CASE("Ensure work completes upon destruction when batching tasks") {
+    std::atomic<int> counter;
+    constexpr auto total_tasks = 30;
+    {
+        dp::thread_pool pool(4);
+        std::vector<std::function<void()>> tasks;
+        tasks.reserve(total_tasks);
+        for (auto i = 0; i < total_tasks; i++) {
+            auto task = [i, &counter]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 100));
+                ++counter;
+            };
+            tasks.emplace_back(task);
+        }
+
+        pool.enqueue(tasks.begin(), tasks.end());
+    }
+
+    CHECK_EQ(counter.load(), total_tasks);
+}

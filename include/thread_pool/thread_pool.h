@@ -145,6 +145,25 @@ namespace dp {
         }
 
         /**
+         * @brief Enqueue a list of tasks into the thread pool.
+         * @tparam Iterator An iterator type
+         * @tparam IteratorType The underlying value type of the iterator
+         * @param begin The start of the task range
+         * @param end The end of the task range
+         */
+        template <typename Iterator,
+                  typename IteratorType = typename std::iterator_traits<Iterator>::value_type>
+        requires std::input_iterator<Iterator> && std::invocable<IteratorType> &&
+            std::is_same_v<void, std::invoke_result_t<IteratorType>>
+        void enqueue(Iterator begin, Iterator end) {
+            // simple range check
+            if (begin >= end) return;
+
+            // enqueue all the tasks
+            enqueue_tasks(begin, end);
+        }
+
+        /**
          * @brief Enqueue a task to be executed in the thread pool that returns void.
          * @tparam Function An invokable type.
          * @tparam Args Argument parameter pack for Function
@@ -167,20 +186,21 @@ namespace dp {
         }
 
         /**
-         * @brief Allows you to schedule coroutines to run on the thread pool. 
+         * @brief Allows you to schedule coroutines to run on the thread pool.
          */
         auto schedule() {
             /// @brief Simple awaitable type that we can return.
             struct scheduled_operation {
                 dp::thread_pool<> *thread_pool_;
-                bool await_ready() { return false; };
+                static bool await_ready() { return false; }
                 void await_suspend(std::coroutine_handle<> handle) {
                     if (thread_pool_) {
                         thread_pool_->enqueue_detach([](std::coroutine_handle<> h) { h.resume(); },
                                                      handle);
                     }
                 }
-                void await_resume() {}
+
+                static void await_resume() {}
             };
 
             return scheduled_operation{this};
@@ -193,6 +213,37 @@ namespace dp {
             pending_tasks_.fetch_add(1, std::memory_order_relaxed);
             tasks_[i].tasks.push(std::forward<Function>(f));
             tasks_[i].signal.release();
+        }
+
+        template <typename Iterator>
+        void enqueue_tasks(Iterator begin, Iterator end) {
+            // get the count of tasks
+            const auto &tasks = std::distance(begin, end);
+            pending_tasks_.fetch_add(tasks, std::memory_order_relaxed);
+
+            // get the number of threads once and re-use
+            const auto &task_size = tasks_.size();
+
+            // split tasks among all threads, go through tasks [begin, end)
+            auto i = count_++ % task_size;
+
+            // start index of where we're adding tasks
+            const auto &start = i;
+            // total count of threads we need to wake up.
+            const auto &count = ::std::min<std::size_t>(tasks, task_size);
+
+            for (auto it = begin; it < end; ++it) {
+                // push the task
+                tasks_[i].tasks.push(std::move(*it));
+                // recalculate the index
+                i = count_++ % task_size;
+            }
+
+            // release all the needed signals to wake all threads
+            for (std::size_t j = 0; j < count; j++) {
+                const auto &index = (start + j) % task_size;
+                tasks_[index].signal.release();
+            }
         }
 
         struct task_item {
