@@ -29,7 +29,7 @@ jobs:
           pip3 install cmake_format==0.6.11 pyyaml
 
       - name: configure
-        run: cmake -G Ninja -S . -B build -DTP_BUILD_EXAMPLES=OFF
+        run: cmake -G Ninja -S . -B build -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF
 
       - name: check style
         run: cmake --build build --target check-format
