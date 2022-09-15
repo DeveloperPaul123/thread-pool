@@ -16,9 +16,14 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     )
 endif()
 
+find_program(CCACHE_EXE ccache)
+if(EXISTS ${CCACHE_EXE})
+    message(STATUS "Found ccache ${CCACHE_EXE}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_EXE})
+endif()
+
 # ---- Add dependencies via CPM ----
 # see https://github.com/TheLartians/CPM.cmake for more info
-
 include(cmake/CPM.cmake)
 
 # PackageProject.cmake will be used to make our target installable
