@@ -186,7 +186,7 @@ namespace dp {
         /**
          * @brief Allows you to schedule coroutines to run on the thread pool.
          */
-        auto schedule() {
+        [[nodiscard]] auto schedule() {
             /// @brief Simple awaitable type that we can return.
             struct scheduled_operation {
                 dp::thread_pool<> *thread_pool_;
@@ -197,7 +197,6 @@ namespace dp {
                                                      handle);
                     }
                 }
-
                 static void await_resume() {}
             };
 
