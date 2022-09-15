@@ -12,7 +12,11 @@ CPMAddPackage(
     NAME benchmark
     GITHUB_REPOSITORY google/benchmark
     VERSION 1.6.1
-    OPTIONS "BENCHMARK_ENABLE_TESTING OFF"
+    OPTIONS 
+        "BENCHMARK_ENABLE_TESTING OFF"
+        "CMAKE_CROSSCOMPILING ON"
+        "HAVE_STD_REGEX OFF"
+        "HAVE_POSIX_REGEX OFF"
 )
 
 CPMAddPackage(
