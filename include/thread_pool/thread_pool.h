@@ -15,6 +15,7 @@
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
+
     namespace details {
 
 #if __cpp_lib_move_only_function
@@ -253,6 +254,9 @@ namespace dp {
             }
         }
 
+        /**
+         * @brief Task item that holds list of tasks and signal semaphore for each thread.
+         */
         struct task_item {
             dp::thread_safe_queue<FunctionType> tasks{};
             std::binary_semaphore signal{0};
