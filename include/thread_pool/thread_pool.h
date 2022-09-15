@@ -155,12 +155,12 @@ namespace dp {
                   typename IteratorType = typename std::iterator_traits<Iterator>::value_type>
         requires std::input_iterator<Iterator> && std::invocable<IteratorType> &&
             std::is_same_v<void, std::invoke_result_t<IteratorType>>
-        void enqueue(Iterator begin, Iterator end) {
+        void enqueue(Iterator &&begin, Iterator &&end) {
             // simple range check
             if (begin >= end) return;
 
             // enqueue all the tasks
-            enqueue_tasks(begin, end);
+            enqueue_tasks(std::forward<Iterator>(begin), std::forward<Iterator>(end));
         }
 
         /**
@@ -208,15 +208,23 @@ namespace dp {
 
       private:
         template <typename Function>
-        void enqueue_task(Function &&f) {
-            const std::size_t i = count_++ % tasks_.size();
-            pending_tasks_.fetch_add(1, std::memory_order_relaxed);
-            tasks_[i].tasks.push(std::forward<Function>(f));
-            tasks_[i].signal.release();
+        [[maybe_unused]] auto assign_task_to_thread(Function &&f) -> std::size_t {
+            tasks_[index_].tasks.push(std::forward<Function>(f));
+            const auto &i = index_;
+            if (++index_ >= tasks_.size()) index_ = 0;
+            return i;
         }
 
-        template <typename Iterator>
-        void enqueue_tasks(Iterator begin, Iterator end) {
+        template <typename Function>
+        void enqueue_task(Function &&f) {
+            pending_tasks_.fetch_add(1, std::memory_order_relaxed);
+            const auto &assigned_index = assign_task_to_thread(std::forward<Function>(f));
+            tasks_[assigned_index].signal.release();
+        }
+
+        template <typename Iterator,
+                  typename IteratorType = typename std::iterator_traits<Iterator>::value_type>
+        void enqueue_tasks(Iterator &&begin, Iterator &&end) {
             // get the count of tasks
             const auto &tasks = std::distance(begin, end);
             pending_tasks_.fetch_add(tasks, std::memory_order_relaxed);
@@ -224,24 +232,26 @@ namespace dp {
             // get the number of threads once and re-use
             const auto &task_size = tasks_.size();
 
-            // split tasks among all threads, go through tasks [begin, end)
-            auto i = count_++ % task_size;
-
             // start index of where we're adding tasks
-            const auto &start = i;
+            std::optional<std::size_t> start = std::nullopt;
             // total count of threads we need to wake up.
             const auto &count = ::std::min<std::size_t>(tasks, task_size);
 
             for (auto it = begin; it < end; ++it) {
                 // push the task
-                tasks_[i].tasks.push(std::move(*it));
-                // recalculate the index
-                i = count_++ % task_size;
+                const auto &assigned_index = assign_task_to_thread(std::move([f = *it]() {
+                    // suppress exceptions
+                    try {
+                        std::invoke(f);
+                    } catch (...) {
+                    }
+                }));
+                if (!start) start = assigned_index;
             }
 
             // release all the needed signals to wake all threads
             for (std::size_t j = 0; j < count; j++) {
-                const auto &index = (start + j) % task_size;
+                const auto &index = (start.value() + j) % task_size;
                 tasks_[index].signal.release();
             }
         }
@@ -253,7 +263,7 @@ namespace dp {
 
         std::vector<std::jthread> threads_;
         std::deque<task_item> tasks_;
-        std::size_t count_{};
+        std::uint_fast8_t index_{0};
         std::atomic_int_fast64_t pending_tasks_{};
     };
 
