@@ -14,6 +14,7 @@
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
+
     namespace details {
         // leave clang detection out for now as there is not support for std::move_only_function
 #if defined(__GNUC__) && !defined(__clang_major__)
@@ -258,6 +259,9 @@ namespace dp {
             }
         }
 
+        /**
+         * @brief Task item that holds list of tasks and signal semaphore for each thread.
+         */
         struct task_item {
             dp::thread_safe_queue<FunctionType> tasks{};
             std::binary_semaphore signal{0};
