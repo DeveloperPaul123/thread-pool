@@ -42,8 +42,8 @@ namespace dp {
                             do {
                                 // invoke the task
                                 while (auto task = tasks_[id].tasks.pop()) {
+                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
                                     try {
-                                        pending_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
                                     } catch (...) {
                                     }
@@ -53,9 +53,12 @@ namespace dp {
                                 for (std::size_t j = 1; j < tasks_.size(); ++j) {
                                     const std::size_t index = (id + j) % tasks_.size();
                                     if (auto task = tasks_[index].tasks.steal()) {
-                                        // steal a task
                                         pending_tasks_.fetch_sub(1, std::memory_order_release);
-                                        std::invoke(std::move(task.value()));
+                                        try {
+                                            // invoke the stolen task
+                                            std::invoke(std::move(task.value()));
+                                        } catch (...) {
+                                        }
                                         // stop stealing once we have invoked a stolen task
                                         break;
                                     }
