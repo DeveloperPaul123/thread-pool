@@ -2,6 +2,7 @@ format:
   tab_size: 4
   line_width: 100
   dangle_parens: true
+  max_pargs_hwrap: 4
 
 parse:
   additional_commands:
