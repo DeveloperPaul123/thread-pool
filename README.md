@@ -4,6 +4,8 @@ thread-pool
 
 [![say thanks](https://img.shields.io/badge/Say%20Thanks-👍-1EAEDB.svg)](https://github.com/DeveloperPaul123/periodic-function/stargazers)
 [![Discord](https://img.shields.io/discord/652515194572111872)](https://discord.gg/CX2ybByRnt)
+![License](https://img.shields.io/github/license/DeveloperPaul123/thread-pool?color=blue)
+![Release](https://img.shields.io/github/v/release/DeveloperPaul123/thread-pool)
 
 [![Ubuntu](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/ubuntu.yml)
 [![Windows](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/windows.yml/badge.svg)](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/windows.yml)
