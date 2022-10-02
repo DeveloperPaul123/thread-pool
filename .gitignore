@@ -5,3 +5,5 @@
 .vs
 out
 CMakeFiles
+.idea
+cmake-build*
