@@ -9,19 +9,14 @@
 #include <semaphore>
 #include <thread>
 #include <type_traits>
+#include <version>
 
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
     namespace details {
-        // leave clang detection out for now as there is not support for std::move_only_function
-#if defined(__GNUC__) && !defined(__clang_major__)
-#    define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#else
-#    define GCC_VERSION 0
-#endif
-#if (defined(_MSC_VER) && (_MSC_VER >= 1930) && (_MSVC_LANG > 202002L)) || (GCC_VERSION >= 120000)
-#    define TP_HAS_MOVE_ONLY_FUNCTION_SUPPORT
+
+#if __cpp_lib_move_only_function
         using default_function_type = std::move_only_function<void()>;
 #else
         using default_function_type = std::function<void()>;
@@ -100,7 +95,7 @@ namespace dp {
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
         requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
-#ifdef TP_HAS_MOVE_ONLY_FUNCTION_SUPPORT
+#if __cpp_lib_move_only_function
             // we can do this in C++23 because we now have support for move only functions
             std::promise<ReturnType> promise;
             auto future = promise.get_future();
