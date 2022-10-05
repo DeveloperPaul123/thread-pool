@@ -2,6 +2,7 @@
 #include <thread_pool/thread_pool.h>
 
 #include <iostream>
+#include <stdexcept>
 #include <string>
 
 auto multiply(int a, int b) { return a * b; }
@@ -130,19 +131,19 @@ TEST_CASE("Ensure task load is spread evenly across threads") {
 }
 
 TEST_CASE("Ensure task exception doesn't kill worker thread") {
-    auto throw_task = [](int) -> int { throw std::logic_error("Error occurred."); };
+    auto throw_task = [](int) -> int { throw std::logic_error(std::string("Error occurred.")); };
     auto regular_task = [](int input) -> int { return input * 2; };
 
     std::atomic_uint_fast64_t count(0);
 
-    auto throw_no_return = []() { throw std::logic_error("Error occurred."); };
+    auto throw_no_return = []() { throw std::logic_error(std::string("Error occurred.")); };
     auto no_throw_no_return = [&count]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         count += 1;
     };
 
     {
-        dp::thread_pool pool;
+        dp::thread_pool pool(4);
 
         auto throw_future = pool.enqueue(throw_task, 1);
         auto no_throw_future = pool.enqueue(regular_task, 2);
@@ -156,4 +157,25 @@ TEST_CASE("Ensure task exception doesn't kill worker thread") {
     }
 
     CHECK_EQ(count.load(), 1);
+}
+
+TEST_CASE("Ensure work completes upon destruction when batching tasks") {
+    std::atomic<int> counter;
+    constexpr auto total_tasks = 30;
+    {
+        dp::thread_pool pool(4);
+        std::vector<std::function<void()>> tasks;
+        tasks.reserve(total_tasks);
+        for (auto i = 0; i < total_tasks; i++) {
+            auto task = [i, &counter]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 100));
+                ++counter;
+            };
+            tasks.emplace_back(task);
+        }
+
+        pool.enqueue(tasks.begin(), tasks.end());
+    }
+
+    CHECK_EQ(counter.load(), total_tasks);
 }

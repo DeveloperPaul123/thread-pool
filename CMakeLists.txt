@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-# ---- Project ----
-
-# Note: update this to your new project's name and version
 project(
     ThreadPool
     VERSION 0.4.1
@@ -19,9 +16,14 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     )
 endif()
 
+find_program(CCACHE_EXE ccache)
+if(EXISTS ${CCACHE_EXE})
+    message(STATUS "Found ccache ${CCACHE_EXE}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_EXE})
+endif()
+
 # ---- Add dependencies via CPM ----
 # see https://github.com/TheLartians/CPM.cmake for more info
-
 include(cmake/CPM.cmake)
 
 # PackageProject.cmake will be used to make our target installable
@@ -60,6 +62,12 @@ target_link_libraries(${PROJECT_NAME} INTERFACE Threads::Threads)
 
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
+target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fcoroutines>")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
+endif()
 
 target_include_directories(
     ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

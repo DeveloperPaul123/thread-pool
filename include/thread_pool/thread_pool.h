@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <concepts>
+#include <coroutine>
 #include <deque>
 #include <functional>
 #include <future>
@@ -14,6 +15,7 @@
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
+
     namespace details {
 
 #if __cpp_lib_move_only_function
@@ -41,8 +43,8 @@ namespace dp {
                             do {
                                 // invoke the task
                                 while (auto task = tasks_[id].tasks.pop()) {
+                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
                                     try {
-                                        pending_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
                                     } catch (...) {
                                     }
@@ -52,9 +54,12 @@ namespace dp {
                                 for (std::size_t j = 1; j < tasks_.size(); ++j) {
                                     const std::size_t index = (id + j) % tasks_.size();
                                     if (auto task = tasks_[index].tasks.steal()) {
-                                        // steal a task
                                         pending_tasks_.fetch_sub(1, std::memory_order_release);
-                                        std::invoke(std::move(task.value()));
+                                        try {
+                                            // invoke the stolen task
+                                            std::invoke(std::move(task.value()));
+                                        } catch (...) {
+                                        }
                                         // stop stealing once we have invoked a stolen task
                                         break;
                                     }
@@ -139,6 +144,25 @@ namespace dp {
         }
 
         /**
+         * @brief Enqueue a list of tasks into the thread pool.
+         * @tparam Iterator An iterator type
+         * @tparam IteratorType The underlying value type of the iterator
+         * @param begin The start of the task range
+         * @param end The end of the task range
+         */
+        template <typename Iterator,
+                  typename IteratorType = typename std::iterator_traits<Iterator>::value_type>
+        requires std::input_iterator<Iterator> && std::invocable<IteratorType> &&
+            std::is_same_v<void, std::invoke_result_t<IteratorType>>
+        void enqueue(Iterator &&begin, Iterator &&end) {
+            // simple range check
+            if (begin >= end) return;
+
+            // enqueue all the tasks
+            enqueue_tasks(std::forward<Iterator>(begin), std::forward<Iterator>(end));
+        }
+
+        /**
          * @brief Enqueue a task to be executed in the thread pool that returns void.
          * @tparam Function An invokable type.
          * @tparam Args Argument parameter pack for Function
@@ -160,15 +184,79 @@ namespace dp {
                 }));
         }
 
-      private:
-        template <typename Function>
-        void enqueue_task(Function &&f) {
-            const std::size_t i = count_++ % tasks_.size();
-            pending_tasks_.fetch_add(1, std::memory_order_relaxed);
-            tasks_[i].tasks.push(std::forward<Function>(f));
-            tasks_[i].signal.release();
+        /**
+         * @brief Allows you to schedule coroutines to run on the thread pool.
+         */
+        [[nodiscard]] auto schedule() {
+            /// @brief Simple awaitable type that we can return.
+            struct scheduled_operation {
+                dp::thread_pool<> *thread_pool_;
+                static bool await_ready() { return false; }
+                void await_suspend(std::coroutine_handle<> handle) {
+                    if (thread_pool_) {
+                        thread_pool_->enqueue_detach([](std::coroutine_handle<> h) { h.resume(); },
+                                                     handle);
+                    }
+                }
+                static void await_resume() {}
+            };
+
+            return scheduled_operation{this};
         }
 
+      private:
+        template <typename Function>
+        [[maybe_unused]] auto assign_task_to_thread(Function &&f) -> std::size_t {
+            tasks_[index_].tasks.push(std::forward<Function>(f));
+            const auto &i = index_;
+            if (++index_ >= tasks_.size()) index_ = 0;
+            return i;
+        }
+
+        template <typename Function>
+        void enqueue_task(Function &&f) {
+            pending_tasks_.fetch_add(1, std::memory_order_relaxed);
+            const auto &assigned_index = assign_task_to_thread(std::forward<Function>(f));
+            tasks_[assigned_index].signal.release();
+        }
+
+        template <typename Iterator,
+                  typename IteratorType = typename std::iterator_traits<Iterator>::value_type>
+        void enqueue_tasks(Iterator &&begin, Iterator &&end) {
+            // get the count of tasks
+            const auto &tasks = std::distance(begin, end);
+            pending_tasks_.fetch_add(tasks, std::memory_order_relaxed);
+
+            // get the number of threads once and re-use
+            const auto &task_size = tasks_.size();
+
+            // start index of where we're adding tasks
+            std::optional<std::size_t> start = std::nullopt;
+            // total count of threads we need to wake up.
+            const auto &count = ::std::min<std::size_t>(tasks, task_size);
+
+            for (auto it = begin; it < end; ++it) {
+                // push the task
+                const auto &assigned_index = assign_task_to_thread(std::move([f = *it]() {
+                    // suppress exceptions
+                    try {
+                        std::invoke(f);
+                    } catch (...) {
+                    }
+                }));
+                if (!start) start = assigned_index;
+            }
+
+            // release all the needed signals to wake all threads
+            for (std::size_t j = 0; j < count; j++) {
+                const auto &index = (start.value() + j) % task_size;
+                tasks_[index].signal.release();
+            }
+        }
+
+        /**
+         * @brief Task item that holds list of tasks and signal semaphore for each thread.
+         */
         struct task_item {
             dp::thread_safe_queue<FunctionType> tasks{};
             std::binary_semaphore signal{0};
@@ -176,7 +264,7 @@ namespace dp {
 
         std::vector<std::jthread> threads_;
         std::deque<task_item> tasks_;
-        std::size_t count_{};
+        std::uint_fast8_t index_{0};
         std::atomic_int_fast64_t pending_tasks_{};
     };
 
