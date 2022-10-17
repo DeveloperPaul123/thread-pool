@@ -25,7 +25,8 @@ jobs:
 
       - name: Install format dependencies
         run: |
-          choco install llvm ninja -y
+          choco install llvm --version 15.0.1 -y
+          choco install ninja -y
           pip3 install cmake_format==0.6.11 pyyaml
 
       - name: configure
