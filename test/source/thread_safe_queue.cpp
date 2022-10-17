@@ -20,9 +20,9 @@ TEST_CASE("Ensure insert and pop works with thread contention") {
     auto res5 = fut5.get();
     auto res6 = fut6.get();
 
-    CHECK(res4.has_value());
-    CHECK(res5.has_value());
-    CHECK(res6.has_value());
+    REQUIRE(res4.has_value());
+    REQUIRE(res5.has_value());
+    REQUIRE(res6.has_value());
 
     // we don't know what order that the values were pushed into the queue
     CHECK_NE(res4.value(), res5.value());

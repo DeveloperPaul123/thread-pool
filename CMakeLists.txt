@@ -9,8 +9,45 @@ project(
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+
+# Option to override which C++ standard to use
+set(TP_CXX_STANDARD
+    DETECT
+    CACHE STRING "Override the default CXX_STANDARD to compile with."
+)
+set_property(CACHE TP_CXX_STANDARD PROPERTY STRINGS DETECT 20 23)
+
+# Decide on the standard to use
+if(TP_CXX_STANDARD STREQUAL "20")
+    if("cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+        message(STATUS "Using C++20 standard")
+        set(CMAKE_CXX_STANDARD 20)
+    else()
+        message(
+            FATAL_ERROR "Requested TP_CXX_STANDARD \"20\" not supported by provided C++ compiler"
+        )
+    endif()
+elseif(TP_CXX_STANDARD STREQUAL "23")
+    if("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+        message(STATUS "Using C++23 standard")
+        set(CMAKE_CXX_STANDARD 23)
+    else()
+        message(
+            FATAL_ERROR "Requested TP_CXX_STANDARD \"23\" not supported by provided C++ compiler"
+        )
+    endif()
+else()
+    if("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+        set(CMAKE_CXX_STANDARD 23)
+        message(STATUS "Detected support for C++23 standard")
+    elseif("cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+        set(CMAKE_CXX_STANDARD 20)
+        message(STATUS "Detected support for C++20 standard")
+    else()
+        message(FATAL_ERROR "Cannot detect CXX_STANDARD of C++20 or newer.")
+    endif()
+endif()
 
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(
@@ -21,45 +58,30 @@ endif()
 
 # ---- Add dependencies via CPM ----
 # see https://github.com/TheLartians/CPM.cmake for more info
-
 include(cmake/CPM.cmake)
 
 # PackageProject.cmake will be used to make our target installable
 CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.6.0")
 
 # ---- Add source files ----
-
-# Note: globbing sources is considered bad practice as CMake's generators may not detect new files
-# automatically. Keep that in mind when changing files, or explicitly mention them here.
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 find_package(Threads REQUIRED)
 
 # ---- Create library ----
-
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(dp::thread-pool ALIAS ${PROJECT_NAME})
 
-message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+target_link_libraries(${PROJECT_NAME} INTERFACE Threads::Threads)
 
-if((MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.32)
-   OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12
-      )
-)
-    option(TP_EXPERIMENTAL "Turn on experimental C++23 feature support" ON)
-endif()
-
-if(DEFINED TP_EXPERIMENTAL AND TP_EXPERIMENTAL)
-    message(STATUS "Using experimental C++23 features.")
+if(CMAKE_CXX_STANDARD GREATER 20)
     target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
 else()
     target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 endif()
 
-target_link_libraries(${PROJECT_NAME} INTERFACE Threads::Threads)
-
 # being a cross-platform target, we enforce standards conformance on MSVC
-target_compile_options(${PROJECT_NAME} INTERFACE "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
+target_compile_options(${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->)
 
 target_include_directories(
     ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
