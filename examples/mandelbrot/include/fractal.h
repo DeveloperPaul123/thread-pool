@@ -19,7 +19,7 @@ struct rgb {
 
 /// @brief Simple range class for viewing window and fractal window
 template <class T>
-requires std::integral<T> || std::floating_point<T>
+    requires std::integral<T> || std::floating_point<T>
 struct fractal_window {
     T x_min{};
     T x_max{};

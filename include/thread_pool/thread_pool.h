@@ -24,8 +24,8 @@ namespace dp {
     }  // namespace details
 
     template <typename FunctionType = details::default_function_type>
-    requires std::invocable<FunctionType> &&
-        std::is_same_v<void, std::invoke_result_t<FunctionType>>
+        requires std::invocable<FunctionType> &&
+                 std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
       public:
         explicit thread_pool(
@@ -93,7 +93,7 @@ namespace dp {
          */
         template <typename Function, typename... Args,
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
-        requires std::invocable<Function, Args...>
+            requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
 #if __cpp_lib_move_only_function
             // we can do this in C++23 because we now have support for move only functions
@@ -146,8 +146,8 @@ namespace dp {
          * @param args Arguments that will be passed to the function.
          */
         template <typename Function, typename... Args>
-        requires std::invocable<Function, Args...> &&
-            std::is_same_v<void, std::invoke_result_t<Function &&, Args &&...>>
+            requires std::invocable<Function, Args...> &&
+                     std::is_same_v<void, std::invoke_result_t<Function &&, Args &&...>>
         void enqueue_detach(Function &&func, Args &&...args) {
             enqueue_task(
                 std::move([f = std::forward<Function>(func),

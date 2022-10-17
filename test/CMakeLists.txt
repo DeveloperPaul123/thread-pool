@@ -27,14 +27,23 @@ add_executable(${PROJECT_NAME} ${sources})
 target_link_libraries(${PROJECT_NAME} doctest::doctest ThreadPool::ThreadPool)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 
-target_compile_options(${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>)
-target_compile_options(${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address>)
+target_compile_options(
+    ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
+)
+target_compile_options(
+    ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address>
+)
 
 # enable compiler warnings
 if(NOT TEST_INSTALLED_VERSION)
-    target_compile_options(ThreadPool INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-Wall -Wpedantic -Wextra -Werror>)
+    target_compile_options(
+        ThreadPool INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-Wall -Wpedantic -Wextra
+                             -Werror>
+    )
     target_compile_options(ThreadPool INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /WX>)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:DOCTEST_CONFIG_USE_STD_HEADERS>)
+    target_compile_definitions(
+        ${PROJECT_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:DOCTEST_CONFIG_USE_STD_HEADERS>
+    )
 endif()
 
 # Note: doctest and similar testing frameworks can automatically configure CMake tests. For other
