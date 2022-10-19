@@ -24,8 +24,7 @@ endif()
 
 file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
 add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} doctest::doctest ThreadPool::ThreadPool)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
+target_link_libraries(${PROJECT_NAME} doctest::doctest ThreadPool)
 
 target_compile_options(
     ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
