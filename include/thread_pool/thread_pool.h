@@ -84,6 +84,7 @@ namespace dp {
 
         /**
          * @brief Enqueue a task into the thread pool that returns a result.
+         * @details Note that task execution begins once the task is enqueued.
          * @tparam Function An invokable type.
          * @tparam Args Argument parameter pack
          * @tparam ReturnType The return type of the Function
