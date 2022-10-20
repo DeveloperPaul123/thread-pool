@@ -92,8 +92,12 @@ target_include_directories(
 # this allows users to install and find the library via `find_package()`.
 
 # the location where the project's version header will be placed should match the project's regular
-# header paths
-string(TOLOWER ${PROJECT_NAME}/version.h VERSION_HEADER_LOCATION)
+# header paths here we get the root folder of the include directory but getting the directory name
+# from one of the headers paths
+list(GET headers 0 first_header)
+get_filename_component(include_dir_path ${first_header} DIRECTORY)
+get_filename_component(include_dir_name ${include_dir_path} NAME)
+string(TOLOWER ${include_dir_name}/version.h VERSION_HEADER_LOCATION)
 
 packageProject(
     NAME ${PROJECT_NAME}

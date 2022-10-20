@@ -1,4 +1,5 @@
 #include <thread_pool/thread_pool.h>
+#include <thread_pool/version.h>
 
 #include <chrono>
 #include <cxxopts.hpp>
@@ -72,6 +73,8 @@ auto main(int argc, char **argv) -> int {
 
     try {
         const auto result = options.parse(argc, argv);
+
+        std::cout << "Using dp::thread-pool version " << THREADPOOL_VERSION << '\n';
 
         if (result.count("help")) {
             std::cout << options.help({"", "Group"}) << std::endl;
