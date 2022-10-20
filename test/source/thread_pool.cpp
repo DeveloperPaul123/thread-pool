@@ -1,5 +1,7 @@
 #include <doctest/doctest.h>
 #include <thread_pool/thread_pool.h>
+// ensure version header is included properly with the project
+#include <thread_pool/version.h>
 
 #include <iostream>
 #include <string>
