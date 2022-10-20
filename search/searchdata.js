@@ -5,8 +5,9 @@ var indexSectionsWithContent =
   2: "d",
   3: "rt",
   4: "eopst~",
-  5: "sv",
-  6: "t"
+  5: "dsv",
+  6: "t",
+  7: "d"
 };
 
 var indexSectionNames =
@@ -17,7 +18,8 @@ var indexSectionNames =
   3: "files",
   4: "functions",
   5: "typedefs",
-  6: "pages"
+  6: "pages",
+  7: "concepts"
 };
 
 var indexSectionLabels =
@@ -28,6 +30,7 @@ var indexSectionLabels =
   3: "Files",
   4: "Functions",
   5: "Typedefs",
-  6: "Pages"
+  6: "Pages",
+  7: "Concepts"
 };
 
