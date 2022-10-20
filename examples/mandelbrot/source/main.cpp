@@ -4,7 +4,6 @@
 #include <chrono>
 #include <cxxopts.hpp>
 #include <filesystem>
-#include <format>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -75,7 +74,7 @@ auto main(int argc, char **argv) -> int {
     try {
         const auto result = options.parse(argc, argv);
 
-        std::cout << std::format("Using dp::thread-pool version {:s}\n", THREADPOOL_VERSION);
+        std::cout << "Using dp::thread-pool version " << THREADPOOL_VERSION << '\n';
 
         if (result.count("help")) {
             std::cout << options.help({"", "Group"}) << std::endl;
