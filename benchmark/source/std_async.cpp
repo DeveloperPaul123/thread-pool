@@ -24,7 +24,7 @@ static void BM_array_multiplication_std_async(benchmark::State& state) {
     for (auto _ : state) {
         for (const auto& mult : computations) {
             // let std async decide on how to launch the task, either deferred or async
-            results.emplace_back(std::async(thread_task, mult));
+            results.emplace_back(std::async(std::launch::async, thread_task, mult));
         }
 
         // wait for futures
