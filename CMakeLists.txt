@@ -108,6 +108,7 @@ packageProject(
     VERSION_HEADER "${VERSION_HEADER_LOCATION}"
     COMPATIBILITY SameMajorVersion
     DEPENDENCIES "Threads"
+    ARCH_INDEPENDENT YES
 )
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
