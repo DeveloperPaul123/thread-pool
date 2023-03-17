@@ -30,7 +30,7 @@ jobs:
       - name: set up Clang
         uses: egor-tensin/setup-clang@v1
         with:
-          version: 13
+          version: 14
           platform: x64
           
       - name: build and install library
