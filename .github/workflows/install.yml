@@ -16,6 +16,9 @@ jobs:
   build:
     runs-on: ubuntu-20.04
 
+    env:
+      CPP_STANDARD: 20
+
     steps:
       - uses: actions/checkout@v3
 
