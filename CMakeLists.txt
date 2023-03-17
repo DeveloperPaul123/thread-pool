@@ -98,7 +98,6 @@ list(GET headers 0 first_header)
 get_filename_component(include_dir_path ${first_header} DIRECTORY)
 get_filename_component(include_dir_name ${include_dir_path} NAME)
 string(TOLOWER ${include_dir_name}/version.h VERSION_HEADER_LOCATION)
-
 packageProject(
     NAME ${PROJECT_NAME}
     VERSION ${PROJECT_VERSION}
@@ -108,7 +107,7 @@ packageProject(
     INCLUDE_DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}
     VERSION_HEADER "${VERSION_HEADER_LOCATION}"
     COMPATIBILITY SameMajorVersion
-    DEPENDENCIES "Threads"
+    DEPENDENCIES "Threads" ARCH_INDEPENDENT YES
 )
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
