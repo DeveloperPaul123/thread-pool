@@ -43,6 +43,9 @@ namespace dp {
                 try {
                     threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
                         do {
+                            // check for a stop request before acquiring the wait signal
+                            if(stop_tok.stop_requested()) break;
+
                             // wait until signaled
                             tasks_[id].signal.acquire();
 
