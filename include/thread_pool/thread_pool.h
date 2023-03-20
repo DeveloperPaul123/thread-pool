@@ -36,7 +36,7 @@ namespace dp {
       public:
         explicit thread_pool(
             const unsigned int &number_of_threads = std::thread::hardware_concurrency())
-            : tasks_(number_of_threads) {
+            : tasks_(number_of_threads), waiting_barrier_(number_of_threads) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 priority_queue_.push_back(size_t(current_id));
@@ -69,8 +69,15 @@ namespace dp {
                                 }
 
                             } while (pending_tasks_.load(std::memory_order_acquire) > 0);
-
-                            priority_queue_.rotate_to_front(id);
+							
+							priority_queue_.rotate_to_front(id);
+                            // once tasks are done, arrive at the barrier.
+                            if (waiting_.load(std::memory_order_acquire)) {
+                                waiting_barrier_.arrive_and_wait();
+                                // notify the waiter
+                                wait_signal_.release();
+                            }
+                            
 
                         } while (!stop_tok.stop_requested());
                     });
@@ -79,6 +86,8 @@ namespace dp {
 
                 } catch (...) {
                     // catch all
+                    // if an exception occurs, drop the count for the barrier
+                    waiting_barrier_.arrive_and_drop();
 
                     // remove one item from the tasks
                     tasks_.pop_back();
@@ -192,6 +201,16 @@ namespace dp {
                 }));
         }
 
+        void wait_for_tasks() {
+            // first check if there are any pending tasks
+            if (pending_tasks_.load(std::memory_order_acquire) == 0) return;
+            waiting_.store(true);
+            // wait for all threads to arrive at the barrier
+            wait_signal_.acquire();
+            // reset the waiting flag
+            waiting_.store(false);
+        }
+
         [[nodiscard]] auto size() const { return threads_.size(); }
 
       private:
@@ -217,6 +236,9 @@ namespace dp {
         std::deque<task_item> tasks_;
         dp::thread_safe_queue<std::size_t> priority_queue_;
         std::atomic_int_fast64_t pending_tasks_{};
+        std::atomic_bool waiting_{};
+        std::barrier<> waiting_barrier_;
+        std::binary_semaphore wait_signal_{0};
     };
 
     /**
