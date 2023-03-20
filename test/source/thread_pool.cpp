@@ -257,11 +257,11 @@ TEST_CASE("Ensure work completes with fewer threads than expected.") {
 TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
     std::atomic counter = 0;
     int total_tasks{};
-    dp::thread_pool pool(4);
 
     SUBCASE("with tasks") { total_tasks = 30; }
     SUBCASE("with no tasks") { total_tasks = 0; }
 
+    dp::thread_pool pool(4);
     for (auto i = 0; i < total_tasks; i++) {
         auto task = [i, &counter]() {
             std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 100));
@@ -269,7 +269,6 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
         };
         pool.enqueue_detach(task);
     }
-
     pool.wait_for_tasks();
 
     CHECK_EQ(counter.load(), total_tasks);
