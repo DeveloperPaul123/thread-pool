@@ -44,7 +44,7 @@ namespace dp {
                     threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
                         do {
                             // check for a stop request before acquiring the wait signal
-                            if(stop_tok.stop_requested()) break;
+                            if (stop_tok.stop_requested()) break;
 
                             // wait until signaled
                             tasks_[id].signal.acquire();
@@ -206,6 +206,8 @@ namespace dp {
             // first check if there are any pending tasks
             if (pending_tasks_.load(std::memory_order_acquire) == 0) return;
             waiting_.store(true);
+            // wake all threads
+            for (std::size_t i = 0; i < tasks_.size(); ++i) tasks_[i].signal.release();
             // wait for all threads to arrive at the barrier
             waiting_barrier_.arrive_and_wait();
             // reset the waiting flag
