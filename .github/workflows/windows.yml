@@ -26,11 +26,25 @@ jobs:
 
       - name: configure
         run: cmake -S . -B build -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF
+        
+      - name: configure clang
+        run: cmake -S . -B build-clang -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF
+        env:
+          CC: clang
+          CXX: clang++
 
       - name: build
         run: cmake --build build --config Debug -j4
 
+      - name: build clang
+        run: cmake --build build-clang --config Debug -j4
+
       - name: test
         run: |
           cd build
+          ctest --build-config Debug
+
+      - name: test clang
+        run: |
+          cd build-clang
           ctest --build-config Debug
