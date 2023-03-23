@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <barrier>
 #include <concepts>
 #include <deque>
 #include <functional>
@@ -9,21 +10,26 @@
 #include <semaphore>
 #include <thread>
 #include <type_traits>
-#include <version>
+#ifdef __has_include
+#    if __has_include(<version>)
+#        include <version>
+#    endif
+#endif
 
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
     namespace details {
 
-#if __cpp_lib_move_only_function
+#ifdef __cpp_lib_move_only_function
         using default_function_type = std::move_only_function<void()>;
 #else
         using default_function_type = std::function<void()>;
 #endif
     }  // namespace details
 
-    template <typename FunctionType = details::default_function_type>
+    template <typename FunctionType = details::default_function_type,
+              typename ThreadType = std::jthread>
         requires std::invocable<FunctionType> &&
                  std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
@@ -31,9 +37,10 @@ namespace dp {
         explicit thread_pool(
             const unsigned int &number_of_threads = std::thread::hardware_concurrency())
             : tasks_(number_of_threads) {
+            std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 try {
-                    threads_.emplace_back([&, id = i](const std::stop_token &stop_tok) {
+                    threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
                         do {
                             // wait until signaled
                             tasks_[id].signal.acquire();
@@ -61,10 +68,17 @@ namespace dp {
                                 }
 
                             } while (pending_tasks_.load(std::memory_order_acquire) > 0);
+
                         } while (!stop_tok.stop_requested());
                     });
+                    // increment the thread id
+                    ++current_id;
+
                 } catch (...) {
                     // catch all
+
+                    // remove one item from the tasks
+                    tasks_.pop_back();
                 }
             }
         }
@@ -161,6 +175,8 @@ namespace dp {
                 }));
         }
 
+        [[nodiscard]] auto size() const { return threads_.size(); }
+
       private:
         template <typename Function>
         void enqueue_task(Function &&f) {
@@ -175,7 +191,7 @@ namespace dp {
             std::binary_semaphore signal{0};
         };
 
-        std::vector<std::jthread> threads_;
+        std::vector<ThreadType> threads_;
         std::deque<task_item> tasks_;
         std::size_t count_{};
         std::atomic_int_fast64_t pending_tasks_{};
