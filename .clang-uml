@@ -1,0 +1,34 @@
+# Directory containing the compile_commands.json file
+compilation_database_dir: out/build/x64-debug-clang
+# The directory where *.puml files will be generated
+output_directory: documentation/diagrams
+# Set this as default for all diagrams
+generate_method_arguments: none
+debug_mode: on
+# Enable generation of hyperlinks to diagram elements
+generate_links:
+  # Link pattern
+  link: "https://github.com/bkryza/clang-uml/blob/{{ git.commit }}/{{ element.source.path }}#L{{ element.source.line }}"
+  # Tooltip pattern
+  tooltip: "{{ element.name }}"
+# The map of diagrams - keys are also diagram file names
+diagrams:
+  classes:
+    type: class
+    # Limiting the number of files to include can significantly
+    # improve the generation time
+    glob:
+      - include/thread_pool/*.h
+    include:
+      # Only include entities from the following namespaces
+      namespaces:
+        - dp      
+    # Specify customized relationship hints for types which are
+    # arguments in template instantiations
+    relationship_hints:
+      # All tuple arguments should be treated as aggregation
+      std::tuple: aggregation
+    plantuml:
+      # Add this line to the beginning of the resulting puml file
+      before:
+        - 'title clang-uml class diagram model'
