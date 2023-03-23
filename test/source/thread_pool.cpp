@@ -3,8 +3,11 @@
 // ensure version header is included properly with the project
 #include <thread_pool/version.h>
 
+#include <algorithm>
 #include <iostream>
+#include <random>
 #include <string>
+#include <thread>
 
 auto multiply(int a, int b) { return a * b; }
 
@@ -89,7 +92,7 @@ TEST_CASE("Ensure work completes upon destruction") {
         dp::thread_pool pool(4);
         for (auto i = 0; i < total_tasks; i++) {
             auto task = [i, &counter]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 100));
+                std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 10));
                 ++counter;
             };
             pool.enqueue_detach(task);
@@ -167,4 +170,78 @@ TEST_CASE("Ensure task exception doesn't kill worker thread") {
     }
 
     CHECK_EQ(count.load(), 1);
+}
+
+class might_throw_thread {
+  public:
+    explicit might_throw_thread() = default;
+    template <class Function, class... Args>
+    explicit might_throw_thread(Function&& func, Args&&... args,
+                                const double& cut_off_probability = 0.5) {
+        // generate random crossover points
+        constexpr auto N = std::mt19937::state_size * sizeof(std::mt19937::result_type);
+        std::random_device source;
+        std::vector random_data(std::size_t(), (N - 1) / sizeof(source()) + 1);
+        std::generate_n(random_data.begin(), random_data.size(), [&] { return source(); });
+        std::seed_seq seeds(std::begin(random_data), std::end(random_data));
+
+        static thread_local std::mt19937 device(seeds);
+        std::uniform_real_distribution dist(0.0, 1.0);
+
+        const auto& value = dist(device);
+        if (value < cut_off_probability) throw std::system_error(std::error_code());
+
+        impl_ = std::jthread(std::forward<Function>(func), std::forward<Args>(args)...);
+    }
+    ~might_throw_thread() { try_cancel_and_join(); }
+    might_throw_thread(const might_throw_thread&) = delete;
+    might_throw_thread(might_throw_thread&&) noexcept = default;
+    might_throw_thread& operator=(const might_throw_thread&) = delete;
+    might_throw_thread& operator=(might_throw_thread&& other) noexcept {
+        if (this == std::addressof(other)) {
+            return *this;
+        }
+
+        try_cancel_and_join();
+        impl_ = std::move(other.impl_);
+        return *this;
+    }
+    void swap(might_throw_thread& other) noexcept { std::swap(impl_, other.impl_); }
+
+    void request_stop() { impl_.request_stop(); }
+    void join() { impl_.join(); }
+
+  private:
+    void try_cancel_and_join() {
+        if (impl_.joinable()) {
+            impl_.request_stop();
+            impl_.join();
+        }
+    }
+    std::jthread impl_;
+};
+
+TEST_CASE("Create thread pool with fewer than requested threads") {
+    const dp::thread_pool<dp::details::default_function_type, might_throw_thread> thread_pool{};
+    CHECK_LT(thread_pool.size(), std::thread::hardware_concurrency());
+}
+
+TEST_CASE("Ensure work completes with fewer threads than expected.") {
+    std::atomic counter = 0;
+    int total_tasks{};
+
+    SUBCASE("with tasks") { total_tasks = 30; }
+    SUBCASE("with no tasks") { total_tasks = 0; }
+    {
+        dp::thread_pool<dp::details::default_function_type, might_throw_thread> pool(4);
+        for (auto i = 0; i < total_tasks; i++) {
+            auto task = [i, &counter]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 10));
+                ++counter;
+            };
+            pool.enqueue_detach(task);
+        }
+    }
+
+    CHECK_EQ(counter.load(), total_tasks);
 }
