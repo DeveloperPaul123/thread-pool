@@ -13,7 +13,7 @@ include(../cmake/tools.cmake)
 
 include(../cmake/CPM.cmake)
 
-CPMAddPackage("gh:onqtam/doctest#2.4.5")
+CPMAddPackage("gh:doctest/doctest@2.4.11")
 CPMAddPackage("gh:TheLartians/Format.cmake@1.7.0")
 
 if(TEST_INSTALLED_VERSION)
@@ -37,10 +37,10 @@ target_compile_options(
 # enable compiler warnings
 if(NOT TEST_INSTALLED_VERSION)
     target_compile_options(
-        ThreadPool INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-Wall -Wpedantic -Wextra
+        ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-Wall -Wpedantic -Wextra
                              -Werror>
     )
-    target_compile_options(ThreadPool INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /WX>)
+    target_compile_options(${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /WX>)
     target_compile_definitions(
         ${PROJECT_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:DOCTEST_CONFIG_USE_STD_HEADERS>
     )
