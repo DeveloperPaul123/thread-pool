@@ -68,7 +68,9 @@ TEST_CASE("matrix_multiplication") {
 
     for (const auto& [array_size, iterations] : args) {
         ankerl::nanobench::Bench bench;
-        bench.title(std::format("matrix multiplication {}x{}", array_size, array_size))
+        auto bench_title = std::string("matrix multiplication ") + std::to_string(array_size) +
+                           "x" + std::to_string(array_size);
+        bench.title(bench_title)
             .warmup(10)
             .relative(true)
             .minEpochIterations(15)
