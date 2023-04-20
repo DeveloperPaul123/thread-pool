@@ -14,7 +14,16 @@ include(../cmake/tools.cmake)
 include(../cmake/CPM.cmake)
 
 CPMAddPackage("gh:doctest/doctest@2.4.11")
-CPMAddPackage("gh:TheLartians/Format.cmake@1.7.0")
+CPMAddPackage(
+  NAME Format.cmake
+  VERSION 1.7.3
+  GITHUB_REPOSITORY TheLartians/Format.cmake
+  OPTIONS 
+      # skip CMake formatting for now
+      "FORMAT_SKIP_CMAKE YES"
+      # path to exclude (optional, supports regular expressions)
+      "CMAKE_FORMAT_EXCLUDE ${CMAKE_SOURCE_DIR}/cmake/CPM.cmake"
+)
 
 if(TEST_INSTALLED_VERSION)
     enable_testing()
