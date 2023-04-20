@@ -48,12 +48,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 
 # enable compiler warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(ThreadPool INTERFACE -Wall -Wpedantic -Wextra)
+    target_compile_options(${PROJECT_NAME} INTERFACE -Wall -Wpedantic -Wextra)
 elseif(MSVC)
-    target_compile_options(ThreadPool INTERFACE /W4)
-    target_compile_definitions(
-        ${PROJECT_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:DOCTEST_CONFIG_USE_STD_HEADERS>
-    )
+    target_compile_options(${PROJECT_NAME} INTERFACE /W4)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:DOCTEST_CONFIG_USE_STD_HEADERS>)
 endif()
 
 string(TOLOWER ${CMAKE_CXX_COMPILER_ID} compiler_id)
