@@ -19,10 +19,11 @@ A simple, functional thread pool implementation using pure C++20.
 
 * Built entirely with C++20
 * Enqueue tasks with or without tracking results
+* [High performance](#benchmarks)
 
 ## Integration
 
-`dp::thread-pool` is a header only library. All the files needed are in `include/thread_pool`. 
+`dp::thread-pool` is a header only library. All the files needed are in `include/thread_pool`.
 
 ### CMake
 
@@ -64,31 +65,51 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 
 You can see other examples in the `/examples` folder.
 
-## Benchmarks 
+## Benchmarks
 
-See the `./benchmark` folder for the benchmark code. The benchmarks are set up to compare matrix multiplication using the `dp::thread_pool` versus `std::async`. A summary of the comparisons is below. Benchmarks were run using the `windows-release` CMake preset (see `CMakePresets.json`).
+Benchmarks were run using the [nanobench](https://github.com/martinus/nanobench) library. See the `./benchmark` folder for the benchmark code. The benchmarks are set up to compare matrix multiplication using the `dp::thread_pool` versus other thread pool libraries. These include:
+
+* [ConorWilliams/Threadpool](https://github.com/ConorWilliams/Threadpool)
+* [bshoshany/thread-pool](https://github.com/bshoshany/thread-pool) (C++17)
+
+The benchmarks are set up so that each library is tested against `dp::thread_pool` using `std::function` as the baseline. Relative measurements (in %) are recorded to compare the performance of each library to the baseline.
 
 ### Machine Specs
 
-* AMD Ryzen 7 1800X (16 X 3593 MHz CPUs)
-* CPU Caches:
-  * L1 Data 32 KiB (x8)
-  * L1 Instruction 64 KiB (x8)
-  * L2 Unified 512 KiB (x8)
-  * L3 Unified 8192 KiB (x2)
+* AMD Ryzen 7 5800X (16 X 3800 MHz CPUs)
 * 32 GB RAM
 
-### Summary of Results
+### Results
 
-Matrix sizes are all square (MxM). Each multiplication is `(MxM) * (MxM)` where `*` refers to a matrix multiplication operation. Times recorded were the best of at least 3 runs.
 
-| Matrix Size | Number of multiplications | `std::async` time (ms) | `dp::thread_pool` time (ms) |
-|:-----------:|:-------------------------:|:----------------------:|:---------------------------:|
-|      8      |          25,000           |          77.9          |            65.3             |
-|     64      |           5,000           |          100           |            65.2             |
-|     256     |            250            |          295           |            59.2             |
-|     512     |            75             |          713           |            60.4             |
-|    1024     |            10             |          1160          |            55.8             |
+#### Summary
+
+In general, `dp::thread_pool` is faster than other thread pool libraries in most cases. This is especially the case when `std::move_only_function` is available. `fu2::unique_function` is a close second, and `std::function` is the sloweset when used in `dp::thread_pool`. In certain situations, `riften::ThreadPool` pulls ahead in performance. This is likely due to the fact that this library uses a lock-free queue. There is also a custom semaphore and it seems that there is a difference in how work stealing is handled as well.
+
+#### Details
+
+Below is a portion of the benchmark data from the MSVC results:
+
+| relative |               ms/op |                op/s |    err% |     total | matrix multiplication 256x256
+|---------:|--------------------:|--------------------:|--------:|----------:|:------------------------------
+|   100.0% |               94.98 |               10.53 |    1.3% |     17.15 | `dp::thread_pool - std::function`
+|   102.8% |               92.43 |               10.82 |    0.8% |     16.44 | `dp::thread_pool - std::move_only_function`
+|    99.0% |               95.98 |               10.42 |    0.8% |     17.27 | `dp::thread_pool - fu2::unique_function`
+|    89.8% |              105.77 |                9.45 |    0.3% |     18.94 | `BS::thread_pool`
+|    96.8% |               98.07 |               10.20 |    0.5% |     17.59 | `riften::Thiefpool`
+
+If you wish to look at the full results, use the links below.
+
+[MSVC Results](./benchmark/results/benchmark_results_msvc.md)
+
+[Clang Results](./benchmark/results/benchmark_results_clang.md)
+
+Some notes on the benchmark methodology:
+
+* Matrix sizes are all square (MxM).
+* Each multiplication is `(MxM) * (MxM)` where `*` refers to a matrix multiplication operation.
+* Benchmarks were run on Windows, so system stability is something to consider (dynamic CPU frequency scaling, etc.).
+* Relative
 
 ## Building
 
