@@ -8,7 +8,6 @@ include(../cmake/tools.cmake)
 # ---- Dependencies ----
 include(../cmake/CPM.cmake)
 
-
 CPMAddPackage(
     NAME nanobench
     GITHUB_REPOSITORY martinus/nanobench
