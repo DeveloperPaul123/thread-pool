@@ -1,16 +1,14 @@
 #include <doctest/doctest.h>
 #include <nanobench.h>
-#include <thread_pool/thread_pool.h>
 
-// thread pool libraries
-#include <BS_thread_pool.hpp>
-#include <boost/asio.hpp>
 #include <concepts>
 #include <fstream>
 #include <future>
-#include <riften/thiefpool.hpp>
 
-#include "boost/asio/post.hpp"
+#include <thread_pool/thread_pool.h>
+#include <riften/thiefpool.hpp>
+#include <BS_thread_pool.hpp>
+
 #include "utilities.h"
 
 template <std::integral DataType, typename FutureProvider>
