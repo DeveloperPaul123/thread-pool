@@ -14,10 +14,10 @@ namespace dp {
      */
     template <typename Lock>
     concept is_lockable = requires(Lock&& lock) {
-                              lock.lock();
-                              lock.unlock();
-                              { lock.try_lock() } -> std::convertible_to<bool>;
-                          };
+        lock.lock();
+        lock.unlock();
+        { lock.try_lock() } -> std::convertible_to<bool>;
+    };
 
     template <typename T, typename Lock = std::mutex>
         requires is_lockable<Lock>

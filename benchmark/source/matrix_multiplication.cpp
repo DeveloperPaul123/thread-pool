@@ -1,13 +1,12 @@
 #include <doctest/doctest.h>
 #include <nanobench.h>
+#include <thread_pool/thread_pool.h>
 
+#include <BS_thread_pool.hpp>
 #include <concepts>
 #include <fstream>
 #include <future>
-
-#include <thread_pool/thread_pool.h>
 #include <riften/thiefpool.hpp>
-#include <BS_thread_pool.hpp>
 
 #include "utilities.h"
 
@@ -118,15 +117,5 @@ TEST_CASE("matrix_multiplication") {
                                    riften_thiefpool.enqueue_detach(thread_task, a, b);
                                });
         }
-
-        // {
-        //     boost::asio::static_thread_pool boost_thread_pool(std::thread::hardware_concurrency());
-        //
-        //     run_benchmark<int>(&bench, array_size, iterations, "boost::static_thread_pool",
-        //                        [&](const std::vector<int>& a, const std::vector<int>& b) -> void {
-        //                            boost::asio::post(boost_thread_pool,
-        //                                              [&]() { thread_task(a, b); });
-        //                        });
-        // }
     }
 }
