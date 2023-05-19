@@ -19,7 +19,7 @@ CPMAddPackage("gh:doctest/doctest@2.4.11")
 CPMAddPackage(
     NAME bshoshany
     GITHUB_REPOSITORY bshoshany/thread-pool
-    VERSION 3.3.0
+    VERSION 3.4.0
     GIT_SHALLOW
 )
 
