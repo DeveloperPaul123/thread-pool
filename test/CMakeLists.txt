@@ -41,10 +41,10 @@ target_compile_options(
     ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
 )
 target_compile_options(
-    ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address --coverage>
+    ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:--coverage>
 )
 target_link_options(
-	${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address -lgcov --coverage>
+	${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-lgcov --coverage>
 )
 
 # enable compiler warnings
