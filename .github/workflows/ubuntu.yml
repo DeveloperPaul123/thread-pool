@@ -65,3 +65,11 @@ jobs:
         run: |
           cd build-clang
           ctest --build-config Debug
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+            gcov: true
+            gcov_include: "include/*"
+        
+

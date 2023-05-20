@@ -43,6 +43,12 @@ target_compile_options(
 target_compile_options(
     ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address -fsanitize=thread>
 )
+target_compile_options(
+    ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
+)
+target_link_options(
+	${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,GNU>-lgcov --coverage>
+)
 
 # enable compiler warnings
 if(NOT TEST_INSTALLED_VERSION)
