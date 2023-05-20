@@ -38,9 +38,6 @@ add_executable(${PROJECT_NAME} ${sources})
 target_link_libraries(${PROJECT_NAME} doctest::doctest dp::thread-pool)
 
 target_compile_options(
-    ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
-)
-target_compile_options(
     ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
 )
 target_link_options(
