@@ -40,7 +40,7 @@ target_compile_options(
     ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
 )
 target_compile_options(
-    ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address>
+    ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-fsanitize=address -fsanitize=thread>
 )
 
 # enable compiler warnings
