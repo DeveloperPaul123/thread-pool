@@ -36,12 +36,19 @@ CPMAddPackage(
     GIT_SHALLOW
 )
 
+CPMAddPackage(
+        NAME task_thread_pool
+        GITHUB_REPOSITORY alugowski/task_thread_pool
+        VERSION 1.0.4
+        GIT_SHALLOW
+)
+
 # ---- Create binary ----
 file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
 file(GLOB headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 add_executable(${PROJECT_NAME} ${headers} ${sources})
-target_link_libraries(${PROJECT_NAME} nanobench doctest::doctest bshoshany RiftenThiefpool dp::thread-pool)
+target_link_libraries(${PROJECT_NAME} nanobench doctest::doctest bshoshany RiftenThiefpool dp::thread-pool task_thread_pool::task_thread_pool)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
