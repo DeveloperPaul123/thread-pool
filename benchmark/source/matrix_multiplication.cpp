@@ -7,6 +7,7 @@
 #include <fstream>
 #include <future>
 #include <riften/thiefpool.hpp>
+#include <task_thread_pool.hpp>
 
 #include "utilities.h"
 
@@ -109,6 +110,14 @@ TEST_CASE("matrix_multiplication") {
             run_benchmark<int>(&bench, array_size, iterations, "BS::thread_pool",
                                [&](const std::vector<int>& a, const std::vector<int>& b) -> void {
                                    bs_thread_pool.push_task(thread_task, a, b);
+                               });
+        }
+
+        {
+            task_thread_pool::task_thread_pool ttp{};
+            run_benchmark<int>(&bench, array_size, iterations, "task_thread_pool",
+                               [&](const std::vector<int>& a, const std::vector<int>& b) -> void {
+                                   ttp.submit_detach(thread_task, a, b);
                                });
         }
 
