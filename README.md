@@ -63,6 +63,17 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 // and so on..
 ```
 
+Example with result from task:
+
+```cpp
+// create a thread pool with a specified number of threads.
+dp::thread_pool pool(4);
+
+auto result = pool.enqueue([](int value) -> int { /*...your task...*/ return value; }, 34);
+// get the result, this will block the current thread until the task is complete
+auto value = result.get();
+```
+
 You can see other examples in the `/examples` folder.
 
 ## Benchmarks
@@ -71,6 +82,7 @@ Benchmarks were run using the [nanobench](https://github.com/martinus/nanobench)
 
 * [ConorWilliams/Threadpool](https://github.com/ConorWilliams/Threadpool)
 * [bshoshany/thread-pool](https://github.com/bshoshany/thread-pool) (C++17)
+* [alugowski/task-thread-pool](https://github.com/alugowski/task-thread-pool) (C++11, no work stealing)
 
 The benchmarks are set up so that each library is tested against `dp::thread_pool` using `std::function` as the baseline. Relative measurements (in %) are recorded to compare the performance of each library to the baseline.
 
@@ -84,7 +96,7 @@ The benchmarks are set up so that each library is tested against `dp::thread_poo
 
 #### Summary
 
-In general, `dp::thread_pool` is faster than other thread pool libraries in most cases. This is especially the case when `std::move_only_function` is available. `fu2::unique_function` is a close second, and `std::function` is the sloweset when used in `dp::thread_pool`. In certain situations, `riften::ThreadPool` pulls ahead in performance. This is likely due to the fact that this library uses a lock-free queue. There is also a custom semaphore and it seems that there is a difference in how work stealing is handled as well.
+In general, `dp::thread_pool` is faster than other thread pool libraries in most cases. This is especially the case when `std::move_only_function` is available. `fu2::unique_function` is a close second, and `std::function` is the sloweset when used in `dp::thread_pool`. In certain situations, `riften::ThreadPool` pulls ahead in performance. This is likely due to the fact that this library uses a lock-free queue. There is also a custom semaphore and it seems that there is a difference in how work stealing is handled as well. Interestingly, `task_thread_pool` seems to pull ahead with large numbers of smaller tasks.
 
 #### Details
 
@@ -92,11 +104,12 @@ Below is a portion of the benchmark data from the MSVC results:
 
 | relative |               ms/op |                op/s |    err% |     total | matrix multiplication 256x256
 |---------:|--------------------:|--------------------:|--------:|----------:|:------------------------------
-|   100.0% |               94.98 |               10.53 |    1.3% |     17.15 | `dp::thread_pool - std::function`
-|   102.8% |               92.43 |               10.82 |    0.8% |     16.44 | `dp::thread_pool - std::move_only_function`
-|    99.0% |               95.98 |               10.42 |    0.8% |     17.27 | `dp::thread_pool - fu2::unique_function`
-|    89.8% |              105.77 |                9.45 |    0.3% |     18.94 | `BS::thread_pool`
-|    96.8% |               98.07 |               10.20 |    0.5% |     17.59 | `riften::Thiefpool`
+|   100.0% |               93.47 |               10.70 |    0.5% |     16.73 | `dp::thread_pool - std::function`
+|   102.6% |               91.06 |               10.98 |    0.6% |     16.26 | `dp::thread_pool - std::move_only_function`
+|    99.3% |               94.17 |               10.62 |    0.4% |     17.03 | `dp::thread_pool - fu2::unique_function`
+|    89.6% |              104.35 |                9.58 |    0.2% |     18.67 | `BS::thread_pool`
+|   100.7% |               92.82 |               10.77 |    0.2% |     16.63 | `task_thread_pool`
+|    96.1% |               97.26 |               10.28 |    0.4% |     17.42 | `riften::Thiefpool`
 
 If you wish to look at the full results, use the links below.
 
