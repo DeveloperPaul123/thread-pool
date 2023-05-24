@@ -70,4 +70,4 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
             gcov: true
-            gcov_include: ./out/build/gcc-debug/test/CMakeFiles/ThreadPoolTests.dir/source
+            gcov_include: include/*
