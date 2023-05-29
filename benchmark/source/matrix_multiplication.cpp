@@ -2,7 +2,7 @@
 #include <nanobench.h>
 #include <thread_pool/thread_pool.h>
 
-#include <BS_thread_pool.hpp>
+#include <BS_thread_pool_light.hpp>
 #include <concepts>
 #include <fstream>
 #include <future>
@@ -106,7 +106,7 @@ TEST_CASE("matrix_multiplication") {
         }
 
         {
-            BS::thread_pool bs_thread_pool{std::thread::hardware_concurrency()};
+            BS::thread_pool_light bs_thread_pool{std::thread::hardware_concurrency()};
             run_benchmark<int>(&bench, array_size, iterations, "BS::thread_pool",
                                [&](const std::vector<int>& a, const std::vector<int>& b) -> void {
                                    bs_thread_pool.push_task(thread_task, a, b);

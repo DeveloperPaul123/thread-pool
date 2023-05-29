@@ -19,13 +19,13 @@ CPMAddPackage("gh:doctest/doctest@2.4.11")
 CPMAddPackage(
     NAME bshoshany
     GITHUB_REPOSITORY bshoshany/thread-pool
-    VERSION 3.4.0
+    VERSION 3.5.0
     GIT_SHALLOW
 )
 
 if(bshoshany_ADDED)
     add_library(bshoshany INTERFACE IMPORTED)
-    target_include_directories(bshoshany INTERFACE ${bshoshany_SOURCE_DIR})
+    target_include_directories(bshoshany INTERFACE ${bshoshany_SOURCE_DIR}/include)
 endif()
 
 CPMAddPackage(
