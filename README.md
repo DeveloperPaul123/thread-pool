@@ -13,7 +13,7 @@ thread-pool
 [![Style](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/style.yml/badge.svg)](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/style.yml)
 [![Install](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/install.yml/badge.svg)](https://github.com/DeveloperPaul123/thread-pool/actions/workflows/install.yml)
 
-A simple, functional thread pool implementation using pure C++20.
+A simple, *fast* and functional thread pool implementation using pure C++20.
 
 ## Features
 
@@ -54,7 +54,7 @@ CPMAddPackage(
 
 ## Usage
 
-Simple example:
+Enqueue tasks without a returned result:
 
 ```cpp
 // create a thread pool with a specified number of threads.
@@ -67,7 +67,7 @@ pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
 // and so on..
 ```
 
-Example with result from task:
+Enqueue tasks with a returned value:
 
 ```cpp
 // create a thread pool with a specified number of threads.
@@ -97,7 +97,6 @@ The benchmarks are set up so that each library is tested against `dp::thread_poo
 
 ### Results
 
-
 #### Summary
 
 In general, `dp::thread_pool` is faster than other thread pool libraries in most cases. This is especially the case when `std::move_only_function` is available. `fu2::unique_function` is a close second, and `std::function` is the sloweset when used in `dp::thread_pool`. In certain situations, `riften::ThreadPool` pulls ahead in performance. This is likely due to the fact that this library uses a lock-free queue. There is also a custom semaphore and it seems that there is a difference in how work stealing is handled as well. Interestingly, `task_thread_pool` seems to pull ahead with large numbers of smaller tasks.
@@ -108,12 +107,12 @@ Below is a portion of the benchmark data from the MSVC results:
 
 | relative |               ms/op |                op/s |    err% |     total | matrix multiplication 256x256
 |---------:|--------------------:|--------------------:|--------:|----------:|:------------------------------
-|   100.0% |               93.47 |               10.70 |    0.5% |     16.73 | `dp::thread_pool - std::function`
-|   102.6% |               91.06 |               10.98 |    0.6% |     16.26 | `dp::thread_pool - std::move_only_function`
-|    99.3% |               94.17 |               10.62 |    0.4% |     17.03 | `dp::thread_pool - fu2::unique_function`
-|    89.6% |              104.35 |                9.58 |    0.2% |     18.67 | `BS::thread_pool`
-|   100.7% |               92.82 |               10.77 |    0.2% |     16.63 | `task_thread_pool`
-|    96.1% |               97.26 |               10.28 |    0.4% |     17.42 | `riften::Thiefpool`
+|   100.0% |               93.27 |               10.72 |    0.7% |     16.69 | `dp::thread_pool - std::function`
+|   102.9% |               90.66 |               11.03 |    0.6% |     16.22 | `dp::thread_pool - std::move_only_function`
+|    98.7% |               94.50 |               10.58 |    0.2% |     16.91 | `dp::thread_pool - fu2::unique_function`
+|    93.5% |               99.73 |               10.03 |    0.4% |     17.86 | `BS::thread_pool`
+|   102.2% |               91.29 |               10.95 |    0.6% |     16.39 | `task_thread_pool`
+|   100.1% |               93.18 |               10.73 |    1.4% |     16.61 | `riften::Thiefpool`
 
 If you wish to look at the full results, use the links below.
 
@@ -154,7 +153,7 @@ cmake --build build
 ### Run clang-format
 
 Use the following commands from the project's root directory to check and fix C++ and CMake source style.
-This requires _clang-format_, _cmake-format_ and _pyyaml_ to be installed on the current system. To use this feature you must turn on `TP_BUILD_TESTS`.
+This requires *clang-format*, *cmake-format* and *pyyaml* to be installed on the current system. To use this feature you must turn on `TP_BUILD_TESTS`.
 
 ```bash
 # view changes
