@@ -117,7 +117,12 @@ namespace dp {
             auto task = [func = std::move(f), ... largs = std::move(args),
                          promise = std::move(promise)]() mutable {
                 try {
-                    promise.set_value(func(largs...));
+                    if constexpr (std::is_same_v<ReturnType, void>) {
+                        func(largs...);
+                        promise.set_value();
+                    } else {
+                        promise.set_value(func(largs...));
+                    }
                 } catch (...) {
                     promise.set_exception(std::current_exception());
                 }
@@ -139,7 +144,13 @@ namespace dp {
             auto task = [func = std::move(f), ... largs = std::move(args),
                          promise = shared_promise]() {
                 try {
-                    promise->set_value(func(largs...));
+                    if constexpr (std::is_same_v<ReturnType, void>) {
+                        func(largs...);
+                        promise->set_value();
+                    } else {
+                        promise->set_value(func(largs...));
+                    }
+
                 } catch (...) {
                     promise->set_exception(std::current_exception());
                 }
