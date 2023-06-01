@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <string>
 #include <thread>
@@ -45,6 +46,14 @@ TEST_CASE("Pass raw reference to pool") {
         pool.enqueue_detach([](int& a) { a *= 2; }, x);
     }
     CHECK_EQ(x, 2);
+}
+
+TEST_CASE("Support enqueue with void return type") {
+    dp::thread_pool pool;
+    auto value = 8;
+    auto future = pool.enqueue([](int& x) { x *= 2; }, std::ref(value));
+    future.wait();
+    CHECK_EQ(value, 16);
 }
 
 TEST_CASE("Ensure input params are properly passed") {
@@ -244,4 +253,62 @@ TEST_CASE("Ensure work completes with fewer threads than expected.") {
     }
 
     CHECK_EQ(counter.load(), total_tasks);
+}
+
+void recursive_sequential_sum(std::atomic_int32_t& counter, int count, dp::thread_pool<>& pool) {
+    counter.fetch_add(count);
+    if (count > 1) {
+        pool.enqueue_detach(recursive_sequential_sum, std::ref(counter), count - 1, std::ref(pool));
+    }
+}
+
+TEST_CASE("Recursive enqueue calls work correctly") {
+    std::atomic_int32_t counter = 0;
+    constexpr auto start = 1000;
+    {
+        dp::thread_pool pool(4);
+        recursive_sequential_sum(counter, start, pool);
+    }
+
+    auto expected_sum = 0;
+    for (int i = 0; i <= start; i++) {
+        expected_sum += i;
+    }
+    CHECK_EQ(expected_sum, counter.load());
+}
+
+void recursive_parallel_sort(int* begin, int* end, int split_level, dp::thread_pool<>& pool) {
+    if (split_level < 2 || end - begin < 2) {
+        std::sort(begin, end);
+    } else {
+        const auto mid = begin + (end - begin) / 2;
+        if (split_level == 2) {
+            const auto future =
+                pool.enqueue(recursive_parallel_sort, begin, mid, split_level / 2, std::ref(pool));
+            std::sort(mid, end);
+            future.wait();
+        } else {
+            const auto left =
+                pool.enqueue(recursive_parallel_sort, begin, mid, split_level / 2, std::ref(pool));
+            const auto right =
+                pool.enqueue(recursive_parallel_sort, mid, end, split_level / 2, std::ref(pool));
+
+            left.wait();
+            right.wait();
+        }
+        std::inplace_merge(begin, mid, end);
+    }
+}
+
+TEST_CASE("Recursive parallel sort") {
+    std::vector<int> data(10000);
+    std::ranges::iota(data, 0);
+    std::ranges::shuffle(data, std::mt19937{std::random_device{}()});
+
+    {
+        dp::thread_pool pool(4);
+        recursive_parallel_sort(data.data(), data.data() + data.size(), 4, pool);
+    }
+
+    CHECK(std::ranges::is_sorted(data));
 }
