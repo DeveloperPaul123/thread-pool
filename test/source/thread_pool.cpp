@@ -302,7 +302,8 @@ void recursive_parallel_sort(int* begin, int* end, int split_level, dp::thread_p
 
 TEST_CASE("Recursive parallel sort") {
     std::vector<int> data(10000);
-    std::ranges::iota(data, 0);
+    // std::ranges::iota is a C++23 feature
+    std::iota(data.begin(), data.end(), 0);
     std::ranges::shuffle(data, std::mt19937{std::random_device{}()});
 
     {
