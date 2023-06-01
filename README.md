@@ -44,7 +44,7 @@ Alternatively, you can use something like [CPM](https://github.com/TheLartians/C
 CPMAddPackage(
   NAME thread-pool
   GITHUB_REPOSITORY DeveloperPaul123/thread-pool
-  GIT_TAG 0.5.1 # change this to latest commit or release tag
+  GIT_TAG 0.6.0 # change this to latest commit or release tag
   OPTIONS
     "TP_BUILD_TESTS OFF"
     "TP_BUILD_BENCHMARKS OFF"
