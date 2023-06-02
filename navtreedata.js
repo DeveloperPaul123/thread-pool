@@ -33,16 +33,19 @@ var NAVTREE =
       [ "Usage", "index.html#autotoc_md3", null ],
       [ "Benchmarks", "index.html#autotoc_md4", [
         [ "Machine Specs", "index.html#autotoc_md5", null ],
-        [ "Summary of Results", "index.html#autotoc_md6", null ]
+        [ "Results", "index.html#autotoc_md6", [
+          [ "Summary", "index.html#autotoc_md7", null ],
+          [ "Details", "index.html#autotoc_md8", null ]
+        ] ]
       ] ],
-      [ "Building", "index.html#autotoc_md7", [
-        [ "Build Options", "index.html#autotoc_md8", null ],
-        [ "Run clang-format", "index.html#autotoc_md9", null ],
-        [ "Build the documentation", "index.html#autotoc_md10", null ]
+      [ "Building", "index.html#autotoc_md9", [
+        [ "Build Options", "index.html#autotoc_md10", null ],
+        [ "Run clang-format", "index.html#autotoc_md11", null ],
+        [ "Build the documentation", "index.html#autotoc_md12", null ]
       ] ],
-      [ "Contributing", "index.html#autotoc_md11", null ],
-      [ "License", "index.html#autotoc_md12", null ],
-      [ "Author", "index.html#autotoc_md13", null ],
+      [ "Contributing", "index.html#autotoc_md13", null ],
+      [ "License", "index.html#autotoc_md14", null ],
+      [ "Author", "index.html#autotoc_md15", null ],
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
         [ "All", "namespacemembers.html", null ],
