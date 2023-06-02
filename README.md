@@ -134,7 +134,7 @@ This project has been built with:
 * Visual Studio 2022
 * Clang `10.+` (via WSL on Windows)
 * GCC `11.+` (vis WSL on Windows)
-* CMake `3.21+`
+* CMake `3.19+`
 
 To build, run:
 
