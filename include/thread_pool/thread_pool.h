@@ -7,6 +7,7 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <numeric>
 #include <semaphore>
 #include <thread>
 #include <type_traits>
@@ -39,6 +40,7 @@ namespace dp {
             : tasks_(number_of_threads) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
+                priority_queue_.push_back(std::move(i));
                 try {
                     threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
                         do {
@@ -47,7 +49,7 @@ namespace dp {
 
                             do {
                                 // invoke the task
-                                while (auto task = tasks_[id].tasks.pop()) {
+                                while (auto task = tasks_[id].tasks.pop_front()) {
                                     try {
                                         pending_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
@@ -68,6 +70,8 @@ namespace dp {
                                 }
 
                             } while (pending_tasks_.load(std::memory_order_acquire) > 0);
+
+                            priority_queue_.rotate_to_front(id);
 
                         } while (!stop_tok.stop_requested());
                     });
@@ -191,9 +195,9 @@ namespace dp {
       private:
         template <typename Function>
         void enqueue_task(Function &&f) {
-            const std::size_t i = count_++ % tasks_.size();
+            auto i = *(priority_queue_.pop_front());
             pending_tasks_.fetch_add(1, std::memory_order_relaxed);
-            tasks_[i].tasks.push(std::forward<Function>(f));
+            tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
 
@@ -204,7 +208,7 @@ namespace dp {
 
         std::vector<ThreadType> threads_;
         std::deque<task_item> tasks_;
-        std::size_t count_{};
+        dp::thread_safe_queue<std::size_t> priority_queue_;
         std::atomic_int_fast64_t pending_tasks_{};
     };
 
