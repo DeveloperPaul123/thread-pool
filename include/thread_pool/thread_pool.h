@@ -195,7 +195,12 @@ namespace dp {
       private:
         template <typename Function>
         void enqueue_task(Function &&f) {
-            auto i = *(priority_queue_.pop_front());
+            auto i_opt = priority_queue_.copy_front_and_rotate_to_back();
+            if (!i_opt.has_value()) {
+                // would only be a problem if there are zero threads
+                return;
+            }
+            auto i = *(i_opt);
             pending_tasks_.fetch_add(1, std::memory_order_relaxed);
             tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
