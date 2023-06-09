@@ -7,7 +7,6 @@
 #include <functional>
 #include <future>
 #include <memory>
-#include <numeric>
 #include <semaphore>
 #include <thread>
 #include <type_traits>
