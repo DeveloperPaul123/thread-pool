@@ -81,6 +81,19 @@ namespace dp {
             data_.push_front(item);
         }
 
+        [[nodiscard]] std::optional<T> copy_front_and_rotate_to_back() {
+            std::scoped_lock lock(mutex_);
+
+            if (data_.empty()) return std::nullopt;
+
+            auto front = data_.front();
+            data_.pop_front();
+
+            data_.push_back(front);
+
+            return front;
+        }
+
       private:
         std::deque<T> data_{};
         mutable Lock mutex_{};
