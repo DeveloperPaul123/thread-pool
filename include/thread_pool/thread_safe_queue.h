@@ -28,18 +28,23 @@ namespace dp {
 
         thread_safe_queue() = default;
 
-        void push(T&& value) {
-            std::lock_guard lock(mutex_);
+        void push_back(T&& value) {
+            std::scoped_lock lock(mutex_);
             data_.push_back(std::forward<T>(value));
         }
 
+        void push_front(T&& value) {
+            std::scoped_lock lock(mutex_);
+            data_.push_front(std::forward<T>(value));
+        }
+
         [[nodiscard]] bool empty() const {
-            std::lock_guard lock(mutex_);
+            std::scoped_lock lock(mutex_);
             return data_.empty();
         }
 
-        [[nodiscard]] std::optional<T> pop() {
-            std::lock_guard lock(mutex_);
+        [[nodiscard]] std::optional<T> pop_front() {
+            std::scoped_lock lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
             auto front = std::move(data_.front());
@@ -47,13 +52,33 @@ namespace dp {
             return front;
         }
 
-        [[nodiscard]] std::optional<T> steal() {
-            std::lock_guard lock(mutex_);
+        [[nodiscard]] std::optional<T> pop_back() {
+            std::scoped_lock lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
             auto back = std::move(data_.back());
             data_.pop_back();
             return back;
+        }
+
+        [[nodiscard]] std::optional<T> steal() {
+            std::scoped_lock lock(mutex_);
+            if (data_.empty()) return std::nullopt;
+
+            auto back = std::move(data_.back());
+            data_.pop_back();
+            return back;
+        }
+
+        void rotate_to_front(const T& item) {
+            std::scoped_lock lock(mutex_);
+            auto iter = std::find(data_.begin(), data_.end(), item);
+
+            if (iter != data_.end()) {
+                std::ignore = data_.erase(iter);
+            }
+
+            data_.push_front(item);
         }
 
       private:

@@ -15,21 +15,21 @@ TEST_CASE("Ensure insert and pop works with thread contention") {
         dp::thread_safe_queue<int> queue;
         std::jthread t1([&queue, &barrier, &p1] {
             barrier.arrive_and_wait();
-            queue.push(1);
+            queue.push_front(1);
             barrier.arrive_and_wait();
-            p1.set_value(queue.pop().value_or(-1));
+            p1.set_value(queue.pop_back().value_or(-1));
         });
         std::jthread t2([&queue, &barrier, &p2] {
             barrier.arrive_and_wait();
-            queue.push(2);
+            queue.push_front(2);
             barrier.arrive_and_wait();
-            p2.set_value(queue.pop().value_or(-1));
+            p2.set_value(queue.pop_back().value_or(-1));
         });
         std::jthread t3([&queue, &barrier, &p3] {
             barrier.arrive_and_wait();
-            queue.push(3);
+            queue.push_front(3);
             barrier.arrive_and_wait();
-            p3.set_value(queue.pop().value_or(-1));
+            p3.set_value(queue.pop_back().value_or(-1));
         });
     }
 
