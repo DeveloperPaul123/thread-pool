@@ -255,6 +255,39 @@ TEST_CASE("Ensure work completes with fewer threads than expected.") {
     CHECK_EQ(counter.load(), total_tasks);
 }
 
+TEST_CASE(
+    "Ensure work completes when one thread is running, another is finished, and a new task is "
+    "enqueued") {
+    std::atomic<size_t> last_thread;
+
+    {
+        dp::thread_pool thread_pool{2};
+
+        // tie up the first thread
+        thread_pool.enqueue_detach([&last_thread]() {
+            std::this_thread::sleep_for(std::chrono::seconds{5});
+            last_thread = 1;
+        });
+
+        // run a quick job on the second thread
+        thread_pool.enqueue_detach([&last_thread]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds{50});
+            last_thread = 2;
+        });
+
+        // wait for the second thread to finish
+        std::this_thread::sleep_for(std::chrono::seconds{1});
+
+        // enqueue a quick job
+        thread_pool.enqueue_detach([&last_thread]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds{50});
+            last_thread = 3;
+        });
+    }
+
+    CHECK_EQ(1, last_thread.load());
+}
+
 void recursive_sequential_sum(std::atomic_int32_t& counter, int count, dp::thread_pool<>& pool) {
     counter.fetch_add(count);
     if (count > 1) {
