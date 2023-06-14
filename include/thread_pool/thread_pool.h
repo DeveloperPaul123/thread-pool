@@ -39,7 +39,7 @@ namespace dp {
             : tasks_(number_of_threads) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
-                priority_queue_.push_back(std::move(i));
+                priority_queue_.push_back(size_t(current_id));
                 try {
                     threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
                         do {
@@ -82,6 +82,9 @@ namespace dp {
 
                     // remove one item from the tasks
                     tasks_.pop_back();
+
+                    // remove our thread from the priority queue
+                    std::ignore = priority_queue_.pop_back();
                 }
             }
         }
