@@ -49,7 +49,18 @@
       "name": "gcc-debug",
       "inherits": "gcc-base",
       "displayName": "GCC Debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TP_USE_PTHREADS": "OFF"
+      }
+    },
+    {
+      "name": "gcc-debug-pthread",
+      "inherits": "gcc-debug",
+      "displayName": "GCC Debug (pthread)",
+      "cacheVariables": {
+        "TP_USE_PTHREADS": "ON"
+      }
     },
     {
       "name": "gcc-release",
