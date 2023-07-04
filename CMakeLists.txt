@@ -67,6 +67,9 @@ CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.6.0")
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 find_package(Threads REQUIRED)
+if(CMAKE_USE_PTHREADS_INIT) 
+    option(TP_USE_PTHREADS "Use pthreads for thread pool" OFF)
+endif()
 
 # ---- Create library ----
 add_library(${PROJECT_NAME} INTERFACE)
@@ -87,6 +90,10 @@ target_include_directories(
     ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                               $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
 )
+
+if(TP_USE_PTHREADS)
+    target_compile_definitions(${PROJECT_NAME} INTERFACE TP_USE_PTHREADS)
+endif()
 
 # ---- Create an installable target ----
 # this allows users to install and find the library via `find_package()`.

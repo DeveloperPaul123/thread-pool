@@ -16,6 +16,7 @@
 #    endif
 #endif
 
+#include "thread_pool/native_thread.h"
 #include "thread_pool/thread_safe_queue.h"
 
 namespace dp {
@@ -29,7 +30,7 @@ namespace dp {
     }  // namespace details
 
     template <typename FunctionType = details::default_function_type,
-              typename ThreadType = std::jthread>
+              typename ThreadType = dp::native_thread>
         requires std::invocable<FunctionType> &&
                  std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
