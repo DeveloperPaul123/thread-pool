@@ -125,7 +125,7 @@ Some notes on the benchmark methodology:
 * Matrix sizes are all square (MxM).
 * Each multiplication is `(MxM) * (MxM)` where `*` refers to a matrix multiplication operation.
 * Benchmarks were run on Windows, so system stability is something to consider (dynamic CPU frequency scaling, etc.).
-* Relative
+* Relative measurements are taken from the `std::function` baseline.
 
 ## Building
 
