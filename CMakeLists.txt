@@ -87,16 +87,15 @@ get_filename_component(include_dir_path ${first_header} DIRECTORY)
 get_filename_component(include_dir_name ${include_dir_path} NAME)
 
 configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/version.h.in
-    ${PROJECT_BINARY_DIR}/include/thread_pool/version.h @ONLY
+    ${PROJECT_SOURCE_DIR}/cmake/version.h.in ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
+    @ONLY
 )
 
 target_include_directories(
-    ${PROJECT_NAME} 
-        INTERFACE 
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-            $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+    ${PROJECT_NAME}
+    INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+              $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+              $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
 )
 
 # ---- Create an installable target ----
@@ -106,34 +105,35 @@ include(CMakePackageConfigHelpers)
 
 # Installation help
 configure_package_config_file(
-  "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
+    "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
+    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
+)
 
 write_basic_package_version_file(
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-  COMPATIBILITY SameMajorVersion
-  ARCH_INDEPENDENT)
-
-install(TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}-targets
-  INCLUDES DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
+    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake" COMPATIBILITY SameMajorVersion
+                                                                               ARCH_INDEPENDENT
 )
 
-install(EXPORT ${PROJECT_NAME}-targets
-  NAMESPACE dp::
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
-  FILE "${PROJECT_NAME}-targets.cmake"
+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+
+install(
+    EXPORT ${PROJECT_NAME}-targets
+    NAMESPACE dp::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
+    FILE "${PROJECT_NAME}-targets.cmake"
 )
 
-install(FILES
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
+install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+              "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
 )
 
-install(FILES ${headers} DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool)
+install(FILES ${headers}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool
+)
 install(FILES ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
-    DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool
 )
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
