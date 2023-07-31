@@ -40,7 +40,7 @@ jobs:
           rm -rf build
 
       - name: configure
-        run: cmake -Stest -Bbuild -DTEST_INSTALLED_VERSION=1 -D-Dthread-pool_DIR="/usr/local/lib/cmake/thread-pool-0.6.0"
+        run: cmake -Stest -Bbuild -DTEST_INSTALLED_VERSION=1 -Dthread-pool_DIR="/usr/local/lib/cmake/thread-pool-0.6.0"
 
       - name: build
         run: cmake --build build --config Debug -j4
