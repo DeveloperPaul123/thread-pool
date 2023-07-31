@@ -128,7 +128,6 @@ install(EXPORT ${PROJECT_NAME}-targets
 
 install(FILES
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
 )
 
