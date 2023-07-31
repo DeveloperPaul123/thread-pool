@@ -102,6 +102,7 @@ target_include_directories(
 # this allows users to install and find the library via `find_package()`.
 
 include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 # Installation help
 configure_package_config_file(
