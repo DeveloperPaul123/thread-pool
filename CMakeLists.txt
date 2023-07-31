@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 # Note: update this to your new project's name and version
 project(
     thread-pool
-    VERSION 0.6.0
+    VERSION 0.6.1
     LANGUAGES CXX
 )
 
