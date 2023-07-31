@@ -35,7 +35,7 @@ jobs:
           
       - name: build and install library
         run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_TESTS=ON -DTP_BUILD_BENCHMARKS=OFF -DCMAKE_INSTALL_PREFIX="/usr/local"
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_TESTS=ON -DTP_BUILD_BENCHMARKS=OFF
           sudo cmake --build build --target install
           rm -rf build
 
