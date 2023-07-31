@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(ThreadPoolTests LANGUAGES CXX)
+project(thread-pool-tests LANGUAGES CXX)
 
 # ---- Options ----
 option(TEST_INSTALLED_VERSION "Test the version found by find_package" OFF)
@@ -26,15 +26,16 @@ CPMAddPackage(
 )
 
 if(TEST_INSTALLED_VERSION)
+    # testing the installed version, so we assume this is the top level CMakeLists.txt
     enable_testing()
-    find_package(ThreadPool REQUIRED)
+    find_package(thread-pool REQUIRED)
 endif()
 
 # ---- Create binary ----
 
 file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
 add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} doctest::doctest ThreadPool::ThreadPool)
+target_link_libraries(${PROJECT_NAME} doctest::doctest dp::thread-pool)
 
 target_compile_options(
     ${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>

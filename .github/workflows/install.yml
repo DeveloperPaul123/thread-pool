@@ -35,12 +35,12 @@ jobs:
           
       - name: build and install library
         run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_TESTS=ON -DTP_BUILD_BENCHMARKS=OFF
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_TESTS=ON -DTP_BUILD_BENCHMARKS=OFF -DCMAKE_INSTALL_PREFIX="/usr/local"
           sudo cmake --build build --target install
           rm -rf build
 
       - name: configure
-        run: cmake -Stest -Bbuild -DTEST_INSTALLED_VERSION=1
+        run: cmake -Stest -Bbuild -DTEST_INSTALLED_VERSION=1 -Dthread-pool_DIR="/usr/local/lib/cmake/thread-pool-0.6.0/"
 
       - name: build
         run: cmake --build build --config Debug -j4

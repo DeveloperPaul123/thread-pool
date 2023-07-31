@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/thread-pool-targets.cmake")
+
+include(CMakeFindDependencyMacro)
+find_dependency(Threads REQUIRED)
