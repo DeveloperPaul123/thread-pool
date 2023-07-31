@@ -56,14 +56,10 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     )
 endif()
 
-# ---- Add dependencies via CPM ----
 # see https://github.com/TheLartians/CPM.cmake for more info
 include(cmake/CPM.cmake)
 
-# PackageProject.cmake will be used to make our target installable
-CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.6.0")
-
-# ---- Add source files ----
+# add source files
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 find_package(Threads REQUIRED)
@@ -83,32 +79,59 @@ endif()
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${PROJECT_NAME} INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->)
 
-target_include_directories(
-    ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-                              $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
-)
-
-# ---- Create an installable target ----
-# this allows users to install and find the library via `find_package()`.
-
 # the location where the project's version header will be placed should match the project's regular
 # header paths here we get the root folder of the include directory but getting the directory name
 # from one of the headers paths
 list(GET headers 0 first_header)
 get_filename_component(include_dir_path ${first_header} DIRECTORY)
 get_filename_component(include_dir_name ${include_dir_path} NAME)
-string(TOLOWER ${include_dir_name}/version.h VERSION_HEADER_LOCATION)
-packageProject(
-    NAME ${PROJECT_NAME}
-    VERSION ${PROJECT_VERSION}
-    NAMESPACE ${PROJECT_NAME}
-    BINARY_DIR ${PROJECT_BINARY_DIR}
-    INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
-    INCLUDE_DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}
-    VERSION_HEADER "${VERSION_HEADER_LOCATION}"
-    COMPATIBILITY SameMajorVersion
-    DEPENDENCIES "Threads" ARCH_INDEPENDENT YES
+
+configure_file(
+    ${PROJECT_SOURCE_DIR}/cmake/version.h.in
+    ${PROJECT_BINARY_DIR}/include/thread_pool/version.h @ONLY
 )
+
+target_include_directories(
+    ${PROJECT_NAME} 
+        INTERFACE 
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+            $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+)
+
+# ---- Create an installable target ----
+# this allows users to install and find the library via `find_package()`.
+
+include(CMakePackageConfigHelpers)
+
+# Installation help
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+  INSTALL_DESTINATION "share/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
+
+write_basic_package_version_file(
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+  COMPATIBILITY SameMajorVersion
+  ARCH_INDEPENDENT)
+
+install(TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}-targets
+  INCLUDES DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+)
+
+install(EXPORT ${PROJECT_NAME}-targets
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+  FILE "${PROJECT_NAME}-targets.cmake"
+)
+
+install(FILES
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+)
+
+install(FILES ${headers} TYPE INCLUDE)
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
 option(TP_BUILD_EXAMPLES "Turn on to build examples." ON)
