@@ -115,6 +115,18 @@
       "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
       "inherits": "x64-debug",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "x64-windows-vcpkg",
+      "displayName": "Install only",
+      "description": "Target Windows x64 Release without any build targets",
+      "inherits": "x64-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "TP_BUILD_TESTS": "OFF",
+        "TP_BUILD_EXAMPLES": "OFFF",
+        "TP_BUILD_BENCHMARKS":"OFF"
+      }
     }
   ]
 }
