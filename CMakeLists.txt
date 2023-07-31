@@ -56,9 +56,6 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     )
 endif()
 
-# see https://github.com/TheLartians/CPM.cmake for more info
-include(cmake/CPM.cmake)
-
 # add source files
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
@@ -140,6 +137,11 @@ install(FILES ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
 option(TP_BUILD_EXAMPLES "Turn on to build examples." ON)
 option(TP_BUILD_BENCHMARKS "Turn on to build benchmarks." ON)
+
+if(${TP_BUILD_TESTS} OR ${TP_BUILD_EXAMPLES} OR ${TP_BUILD_BENCHMARKS})
+    # see https://github.com/TheLartians/CPM.cmake for more info
+    include(cmake/CPM.cmake)
+endif()
 
 if(${TP_BUILD_TESTS})
     enable_testing()
