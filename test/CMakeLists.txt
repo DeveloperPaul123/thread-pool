@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(ThreadPoolTests LANGUAGES CXX)
+project(thread-pool-tests LANGUAGES CXX)
 
 # ---- Options ----
 option(TEST_INSTALLED_VERSION "Test the version found by find_package" OFF)
@@ -26,8 +26,9 @@ CPMAddPackage(
 )
 
 if(TEST_INSTALLED_VERSION)
+    # testing the installed version, so we assume this is the top level CMakeLists.txt
     enable_testing()
-    find_package(ThreadPool REQUIRED)
+    find_package(thread-pool REQUIRED)
 endif()
 
 # ---- Create binary ----

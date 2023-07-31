@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(ThreadPoolBenchmarks LANGUAGES CXX)
+project(thread-pool-benchmarks LANGUAGES CXX)
 
 # --- Import tools ----
 include(../cmake/tools.cmake)

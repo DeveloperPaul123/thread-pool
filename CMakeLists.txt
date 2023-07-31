@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
 # Note: update this to your new project's name and version
 project(
-    ThreadPool
+    thread-pool
     VERSION 0.6.0
     LANGUAGES CXX
 )
@@ -66,7 +66,7 @@ find_package(Threads REQUIRED)
 
 # ---- Create library ----
 add_library(${PROJECT_NAME} INTERFACE)
-add_library(dp::thread-pool ALIAS ${PROJECT_NAME})
+add_library(dp::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME} INTERFACE Threads::Threads)
 
@@ -108,7 +108,7 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
   "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  INSTALL_DESTINATION "share/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
 
 write_basic_package_version_file(
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
@@ -117,21 +117,25 @@ write_basic_package_version_file(
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}-targets
-  INCLUDES DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  INCLUDES DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
 )
 
 install(EXPORT ${PROJECT_NAME}-targets
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+  NAMESPACE dp::
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
   FILE "${PROJECT_NAME}-targets.cmake"
 )
 
 install(FILES
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
 )
 
-install(FILES ${headers} TYPE INCLUDE)
+install(FILES ${headers} DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool)
+install(FILES ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
+    DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool
+)
 
 option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
 option(TP_BUILD_EXAMPLES "Turn on to build examples." ON)
