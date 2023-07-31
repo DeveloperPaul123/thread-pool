@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['default_5ffunction_5ftype_0',['default_function_type',['../d3/d1b/namespacedp_1_1details.html#a6ada30bb36b76631e306fd2ba96b1a58',1,'dp::details']]],
-  ['details_1',['details',['../d3/d1b/namespacedp_1_1details.html',1,'dp']]],
-  ['dp_2',['dp',['../df/d88/namespacedp.html',1,'']]],
-  ['is_5flockable_3',['is_lockable',['../d8/d15/conceptdp_1_1is__lockable.html',1,'dp']]]
+  ['copy_5ffront_5fand_5frotate_5fto_5fback_0',['copy_front_and_rotate_to_back',['../d7/d54/classdp_1_1thread__safe__queue.html#a1dc6344c1b5a66ad5418b715b5316187',1,'dp::thread_safe_queue']]]
 ];

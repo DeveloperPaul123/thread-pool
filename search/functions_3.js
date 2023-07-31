@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['size_0',['size',['../d8/d6e/classdp_1_1thread__pool.html#a334d1a0d142411be6a35d28cb570665b',1,'dp::thread_pool']]],
-  ['steal_1',['steal',['../d7/d54/classdp_1_1thread__safe__queue.html#a318c45591a4729cc0590b029dcaf7774',1,'dp::thread_safe_queue']]]
+  ['pop_5fback_0',['pop_back',['../d7/d54/classdp_1_1thread__safe__queue.html#aacb1c97dc6636fe676bf13859c3ed54f',1,'dp::thread_safe_queue']]],
+  ['pop_5ffront_1',['pop_front',['../d7/d54/classdp_1_1thread__safe__queue.html#afe0865db1c3894cb98b8a12ca0622bc0',1,'dp::thread_safe_queue']]],
+  ['push_5fback_2',['push_back',['../d7/d54/classdp_1_1thread__safe__queue.html#a52a8dc9f5f8491d9f0b81ae9e03eec29',1,'dp::thread_safe_queue']]],
+  ['push_5ffront_3',['push_front',['../d7/d54/classdp_1_1thread__safe__queue.html#a52879820b3bc27440b9519a7f9c9cd14',1,'dp::thread_safe_queue']]]
 ];
