@@ -65,12 +65,13 @@ jobs:
         run: |
           cd build-clang
           ctest --build-config Debug
+
       - name: Set up coverage tools
         run: |
           sudo apt-get install lcov gcovr -y
 
       - name: Generate coverage report
-        working-directory: ${{runner.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
+        working-directory: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
         run: |
             lcov --directory . --capture --output-file coverage.info
             # lcov --remove coverage.info '*/test/*' --output-file coverage.info
@@ -78,4 +79,4 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
-            files: ${{runner.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir/coverage.info
+            files: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir/coverage.info
