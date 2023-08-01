@@ -73,7 +73,7 @@ jobs:
       - name: Generate coverage report
         working-directory: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
         run: |
-            lcov --directory . --capture --output-file coverage.info
+            lcov --directory . --capture --gcov gcov --output-file coverage.info
             lcov --remove coverage.info '*/test/*' --output-file coverage.info
 
       - name: Upload coverage reports to Codecov
