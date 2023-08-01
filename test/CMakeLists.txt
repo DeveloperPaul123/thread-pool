@@ -41,7 +41,7 @@ target_compile_options(
     ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
 )
 target_link_options(
-	${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-lgcov --coverage>
+    ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
 )
 
 # enable compiler warnings
