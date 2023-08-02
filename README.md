@@ -26,12 +26,17 @@ A simple, *fast* and functional thread pool implementation using pure C++20.
 
 `dp::thread-pool` is a header only library. All the files needed are in `include/thread_pool`.
 
+### vcpkg
+
+`dp::thread-pool` is available on `vcpkg`
+
+```powershell
+vcpkg install dp-thread-pool
+```
+
 ### CMake
 
-`ThreadPool` defines two CMake targets:
-
-* `ThreadPool::ThreadPool`
-* `dp::thread-pool`
+`thread-pool` defines the CMake target `dp::thread-pool`.
 
 You can then use `find_package()`:
 
