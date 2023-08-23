@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nanobench.h>
+
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -52,4 +54,13 @@ template <typename T, typename Rng = ankerl::nanobench::Rng>
     }
 
     return computations;
+}
+
+template <std::ranges::range Seq, typename ValueType = std::ranges::range_value_t<Seq>>
+    requires std::is_integral_v<ValueType>
+void generate_random_data(Seq&& seq) {
+    static ankerl::nanobench::Rng rng(std::random_device{}());
+    std::uniform_int_distribution<ValueType> distribution(std::numeric_limits<ValueType>::min(),
+                                                          std::numeric_limits<ValueType>::max());
+    std::ranges::generate(seq, [&] { return distribution(rng); });
 }
