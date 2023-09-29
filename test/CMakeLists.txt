@@ -52,7 +52,7 @@ if(NOT WIN32)
     target_link_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fsanitize=thread>
     )
-elseif(MSVC AND ${CMAKE_BUILD_TYPE} MATCHES "Debug;RelWithDebInfo")
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC" AND CMAKE_BUILD_TYPE MATCHES Debug,RelWithDebInfo )
     target_compile_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
     )
