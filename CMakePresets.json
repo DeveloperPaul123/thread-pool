@@ -78,6 +78,12 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
+      "name": "clang-release-with-debug-info",
+      "inherits": "clang-base",
+      "displayName": "Clang RelWithDebInfo",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+    },
+    {
       "name": "x64-debug",
       "displayName": "x64 Debug",
       "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
@@ -112,9 +118,16 @@
     {
       "name": "x64-release",
       "displayName": "x64 Release",
-      "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+      "description": "Target Windows (64-bit) with the Visual Studio development environment. (Release)",
       "inherits": "x64-debug",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "x64-release-with-debug",
+      "displayName": "x64 Release w/Debug",
+      "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+      "inherits": "x64-debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
     },
     {
       "name": "x64-windows-vcpkg",
@@ -125,7 +138,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "TP_BUILD_TESTS": "OFF",
         "TP_BUILD_EXAMPLES": "OFFF",
-        "TP_BUILD_BENCHMARKS":"OFF"
+        "TP_BUILD_BENCHMARKS": "OFF"
       }
     }
   ]
