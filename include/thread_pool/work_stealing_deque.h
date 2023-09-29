@@ -178,7 +178,7 @@ namespace dp {
 
             if (top < bottom) {
                 // non-empty queue
-                auto buffer = buffer_.load(release);
+                auto buffer = buffer_.load(acquire);
                 auto temp = buffer->load(top, acquire);
                 if (!top_.compare_exchange_strong(top, top + 1, seq_cst, relaxed)) {
                     // failed the race
