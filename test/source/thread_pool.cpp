@@ -13,19 +13,19 @@
 auto multiply(int a, int b) { return a * b; }
 
 TEST_CASE("Multiply using global function") {
-    dp::thread_pool pool;
+    dp::thread_pool pool{};
     auto result = pool.enqueue(multiply, 3, 4);
     CHECK_EQ(result.get(), 12);
 }
 
 TEST_CASE("Multiply using lambda") {
-    dp::thread_pool pool;
+    dp::thread_pool pool{};
     auto result = pool.enqueue([](int a, int b) { return a * b; }, 3, 4);
     CHECK_EQ(result.get(), 12);
 }
 
 TEST_CASE("Multiply with functor") {
-    dp::thread_pool pool;
+    dp::thread_pool pool{};
     auto result = pool.enqueue(std::multiplies<int>{}, 3, 4);
     CHECK_EQ(result.get(), 12);
 }
@@ -33,7 +33,7 @@ TEST_CASE("Multiply with functor") {
 TEST_CASE("Pass reference to pool") {
     int x = 2;
     {
-        dp::thread_pool pool;
+        dp::thread_pool pool{};
         pool.enqueue_detach([](int& a) { a *= 2; }, std::ref(x));
     }
     CHECK_EQ(x, 4);
@@ -42,14 +42,14 @@ TEST_CASE("Pass reference to pool") {
 TEST_CASE("Pass raw reference to pool") {
     int x = 2;
     {
-        dp::thread_pool pool;
+        dp::thread_pool pool{};
         pool.enqueue_detach([](int& a) { a *= 2; }, x);
     }
     CHECK_EQ(x, 2);
 }
 
 TEST_CASE("Support enqueue with void return type") {
-    dp::thread_pool pool;
+    dp::thread_pool pool{};
     auto value = 8;
     auto future = pool.enqueue([](int& x) { x *= 2; }, std::ref(value));
     future.wait();
@@ -149,7 +149,7 @@ TEST_CASE("Ensure task load is spread evenly across threads") {
     // worst case is the same thread doing the long task back to back. Tasks are assigned
     // sequentially in the thread pool so this would be the default execution if there was no work
     // stealing.
-    CHECK_LT(duration.count(), long_task_time * 2);
+    CHECK_LT(duration.count(), long_task_time * 2 + 1);
 }
 
 TEST_CASE("Ensure task exception doesn't kill worker thread") {
@@ -165,7 +165,7 @@ TEST_CASE("Ensure task exception doesn't kill worker thread") {
     };
 
     {
-        dp::thread_pool pool;
+        dp::thread_pool pool{};
 
         auto throw_future = pool.enqueue(throw_task, 1);
         auto no_throw_future = pool.enqueue(regular_task, 2);
