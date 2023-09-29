@@ -45,7 +45,7 @@ target_link_options(
     ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
 )
 
-if(NOT WIN32)
+if(NOT WIN32 AND TP_THREAD_SANITIZER)
     target_compile_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fsanitize=thread -g>
     )
