@@ -26,7 +26,6 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
       },
       "condition": {
@@ -40,7 +39,6 @@
       "hidden": true,
       "inherits": "linux-base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       }
     },
@@ -48,7 +46,10 @@
       "name": "gcc-debug",
       "inherits": "gcc-base",
       "displayName": "GCC Debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TP_THREAD_SANITIZER": "ON"
+      }
     },
     {
       "name": "gcc-release",
@@ -61,7 +62,6 @@
       "hidden": true,
       "inherits": "linux-base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       }
     },
@@ -69,7 +69,10 @@
       "name": "clang-debug",
       "inherits": "clang-base",
       "displayName": "Clang Debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TP_THREAD_SANITIZER": "ON"
+      }
     },
     {
       "name": "clang-release",
@@ -81,7 +84,10 @@
       "name": "clang-release-with-debug-info",
       "inherits": "clang-base",
       "displayName": "Clang RelWithDebInfo",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "TP_THREAD_SANITIZER": "ON"
+      }
     },
     {
       "name": "x64-debug",

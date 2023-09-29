@@ -43,10 +43,10 @@ jobs:
           platform: x64
       
       - name: configure gcc
-        run: cmake -S . -B build -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -S . -B build -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
 
       - name: configure clang
-        run: cmake -S . -B build-clang -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -S . -B build-clang -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
         env:
           CC: clang
           CXX: clang++
