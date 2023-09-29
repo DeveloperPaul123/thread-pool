@@ -17,11 +17,13 @@
 #endif
 
 #include "thread_pool/thread_safe_queue.h"
+#include "thread_pool/work_stealing_deque.h"
 
 namespace dp {
     namespace details {
 
-#ifdef __cpp_lib_move_only_function
+        // TODO: use move only function, work stealing deque can't use move only types
+#if 0  // __cpp_lib_move_only_function
         using default_function_type = std::move_only_function<void()>;
 #else
         using default_function_type = std::function<void()>;
@@ -48,7 +50,7 @@ namespace dp {
 
                             do {
                                 // invoke the task
-                                while (auto task = tasks_[id].tasks.pop_front()) {
+                                while (auto task = tasks_[id].tasks.pop_top()) {
                                     try {
                                         pending_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
@@ -56,16 +58,11 @@ namespace dp {
                                     }
                                 }
 
-                                // try to steal a task
-                                for (std::size_t j = 1; j < tasks_.size(); ++j) {
-                                    const std::size_t index = (id + j) % tasks_.size();
-                                    if (auto task = tasks_[index].tasks.steal()) {
-                                        // steal a task
-                                        pending_tasks_.fetch_sub(1, std::memory_order_release);
-                                        std::invoke(std::move(task.value()));
-                                        // stop stealing once we have invoked a stolen task
-                                        break;
-                                    }
+                                // try to steal a task from our donor
+                                auto donor_index = (id + 1) % tasks_.size();
+                                if (auto task = tasks_[donor_index].tasks.pop_top()) {
+                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
+                                    std::invoke(std::move(task.value()));
                                 }
 
                             } while (pending_tasks_.load(std::memory_order_acquire) > 0);
@@ -116,8 +113,8 @@ namespace dp {
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
             requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
-#ifdef __cpp_lib_move_only_function
-            // we can do this in C++23 because we now have support for move only functions
+#if 0  // __cpp_lib_move_only_function
+          // we can do this in C++23 because we now have support for move only functions
             std::promise<ReturnType> promise;
             auto future = promise.get_future();
             auto task = [func = std::move(f), ... largs = std::move(args),
@@ -204,12 +201,12 @@ namespace dp {
             }
             auto i = *(i_opt);
             pending_tasks_.fetch_add(1, std::memory_order_relaxed);
-            tasks_[i].tasks.push_back(std::forward<Function>(f));
+            tasks_[i].tasks.push_bottom(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
 
         struct task_item {
-            dp::thread_safe_queue<FunctionType> tasks{};
+            dp::work_stealing_deque<FunctionType> tasks{};
             std::binary_semaphore signal{0};
         };
 
