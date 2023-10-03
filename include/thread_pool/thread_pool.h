@@ -36,13 +36,16 @@ namespace dp {
       public:
         explicit thread_pool(
             const unsigned int &number_of_threads = std::thread::hardware_concurrency())
-            : tasks_(number_of_threads) {
+            : tasks_(number_of_threads), waiting_barrier_(number_of_threads + 1) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
-                priority_queue_.push_back(size_t(current_id));
+                priority_queue_.push_back(static_cast<std::size_t>(current_id));
                 try {
                     threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
                         do {
+                            // check for a stop request before acquiring the wait signal
+                            if (stop_tok.stop_requested()) break;
+
                             // wait until signaled
                             tasks_[id].signal.acquire();
 
@@ -72,6 +75,11 @@ namespace dp {
 
                             priority_queue_.rotate_to_front(id);
 
+                            // once tasks are done, arrive at the barrier.
+                            if (waiting_.load(std::memory_order_acquire)) {
+                                waiting_barrier_.arrive_and_wait();
+                            }
+
                         } while (!stop_tok.stop_requested());
                     });
                     // increment the thread id
@@ -79,6 +87,8 @@ namespace dp {
 
                 } catch (...) {
                     // catch all
+                    // if an exception occurs, drop the count for the barrier
+                    waiting_barrier_.arrive_and_drop();
 
                     // remove one item from the tasks
                     tasks_.pop_back();
@@ -192,6 +202,18 @@ namespace dp {
                 }));
         }
 
+        void wait_for_tasks() {
+            // first check if there are any pending tasks
+            if (pending_tasks_.load(std::memory_order_acquire) == 0) return;
+            waiting_.store(true, std::memory_order_release);
+            // wake all threads
+            for (std::size_t i = 0; i < tasks_.size(); ++i) tasks_[i].signal.release();
+            // wait for all threads to arrive at the barrier
+            waiting_barrier_.arrive_and_wait();
+            // reset the waiting flag
+            waiting_.store(false, std::memory_order_release);
+        }
+
         [[nodiscard]] auto size() const { return threads_.size(); }
 
       private:
@@ -217,6 +239,8 @@ namespace dp {
         std::deque<task_item> tasks_;
         dp::thread_safe_queue<std::size_t> priority_queue_;
         std::atomic_int_fast64_t pending_tasks_{};
+        std::atomic_bool waiting_{};
+        std::barrier<> waiting_barrier_;
     };
 
     /**
