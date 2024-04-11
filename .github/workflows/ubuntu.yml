@@ -83,12 +83,17 @@ jobs:
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
           
       # clang needs GCC
-      - name: set up GCC
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: 11
-          platform: x64
-
+      # - name: set up GCC
+      #   uses: egor-tensin/setup-gcc@v1
+      #   with:
+      #     version: 11
+      #     platform: x64
+      - name: Set up libs
+        run:
+          sudo apt-get update
+          sudo apt-get install aptitude
+          sudo aptitude install libc6
+        
       - name: Set up Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
