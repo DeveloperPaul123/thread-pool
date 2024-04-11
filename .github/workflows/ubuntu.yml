@@ -89,9 +89,9 @@ jobs:
       #     version: 11
       #     platform: x64
       - name: Install aptitude
-        run: sudo DEBIAN_FRONTEND=noninteractive apt install aptitude
+        run: sudo DEBIAN_FRONTEND=noninteractive apt install aptitude -y
       - name: Install libc6
-        run: sudo DEBIAN_FRONTEND=noninteractive aptitude install libc6 --no-gui -f
+        run: sudo DEBIAN_FRONTEND=noninteractive aptitude install libc6 --no-gui -f -y
         
       - name: Set up Clang
         uses: KyleMayes/install-llvm-action@v2
