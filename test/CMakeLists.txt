@@ -46,14 +46,15 @@ target_link_options(
 )
 
 if(NOT WIN32 AND TP_THREAD_SANITIZER)
-    message(STATUS "Settings thread sanitizer flags.")
+    message(STATUS "Setting thread sanitizer flags.")
     target_compile_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fsanitize=thread -g>
     )
     target_link_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fsanitize=thread>
     )
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC" AND CMAKE_BUILD_TYPE MATCHES Debug,RelWithDebInfo )
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC" AND "${CMAKE_BUILD_TYPE}" MATCHES ".*Deb.*" )
+    message(STATUS "Setting address sanitizer flags.")
     target_compile_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fsanitize=address>
     )
