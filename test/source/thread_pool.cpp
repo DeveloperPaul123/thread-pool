@@ -445,3 +445,18 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
 
     CHECK_EQ(counter.load(), total_tasks);
 }
+
+// see
+// https://github.com/DevShiftTeam/AppShift-MemoryPool/commit/ea5908cbbd1c9163e9bc700d102e97b53e737fe5
+int fib_thread_loop(int n, dp::thread_pool<>& pool) {
+    if (n <= 1) return n;
+    auto a = pool.enqueue(fib_thread_loop, n - 1, std::ref(pool));
+    auto b = pool.enqueue(fib_thread_loop, n - 2, std::ref(pool));
+    return a.get() + b.get();
+}
+
+TEST_CASE("Recursive fibonacci sequence") {
+    dp::thread_pool pool{};
+    auto result = fib_thread_loop(6, pool);
+    CHECK(result == 8);
+}
