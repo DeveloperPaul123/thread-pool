@@ -147,7 +147,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "TP_BUILD_TESTS": "OFF",
-        "TP_BUILD_EXAMPLES": "OFFF",
+        "TP_BUILD_EXAMPLES": "OFF",
         "TP_BUILD_BENCHMARKS": "OFF"
       }
     }
