@@ -251,7 +251,7 @@ TEST_CASE("Ensure work completes with fewer threads than expected.") {
             pool.enqueue_detach(task);
         }
     }
-        CHECK_EQ(counter.load(), total_tasks);
+    CHECK_EQ(counter.load(), total_tasks);
 }
 
 TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
