@@ -13,15 +13,67 @@ env:
   CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
 
 jobs:
-  build:
+  
+  build-gcc:
+    name: "gcc-${{ matrix.version }}"
     runs-on: ubuntu-20.04
+    env:
+      CPP_STANDARD: 20
+    strategy:
+        fail-fast: false
+        matrix:
+            version: [11]
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/cache@v3
+      with:
+        path: "**/cpm_modules"
+        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+
+    - name: set up GCC
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: ${{matrix.version}}
+        platform: x64
+
+    - name: configure gcc
+      run: cmake -S . -B build -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
+
+    - name: build
+      run: cmake --build build -j4
+
+    - name: test
+      run: |
+        cd build
+        ctest --build-config Debug
+
+    - name: Set up coverage tools
+      run: |
+          sudo apt-get install lcov gcovr -y
+
+    - name: Generate coverage report
+      working-directory: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
+      run: |
+        lcov --directory . --capture --gcov gcov-11 --output-file coverage.info
+        lcov --remove coverage.info '*/test/*' --output-file coverage.info
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir/coverage.info
+
+  build-clang:
+    name: "clang-${{matrix.version}}"
+    runs-on: ubuntu-20.04
+    env:
+      CPP_STANDARD: 20
     strategy:
       fail-fast: false
       max-parallel: 4
-        
-    env:
-      CPP_STANDARD: 20
-
+      matrix:
+        version: [14, 15, 16, 17]
+         
     steps:
       - uses: actions/checkout@v3
 
@@ -30,20 +82,18 @@ jobs:
           path: "**/cpm_modules"
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
           
-      - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 14
-          platform: x64
-
+      # clang needs GCC
       - name: set up GCC
         uses: egor-tensin/setup-gcc@v1
         with:
           version: 11
           platform: x64
-      
-      - name: configure gcc
-        run: cmake -S . -B build -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Set up Clang
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: x64
 
       - name: configure clang
         run: cmake -S . -B build-clang -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
@@ -52,31 +102,9 @@ jobs:
           CXX: clang++
       
       - name: build
-        run: |
-          cmake --build build -j4
-          cmake --build build-clang -j4
-
-      - name: test
-        run: |
-          cd build
-          ctest --build-config Debug
+        run: cmake --build build-clang -j4
 
       - name: test clang
         run: |
           cd build-clang
           ctest --build-config Debug
-
-      - name: Set up coverage tools
-        run: |
-          sudo apt-get install lcov gcovr -y
-
-      - name: Generate coverage report
-        working-directory: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
-        run: |
-            lcov --directory . --capture --gcov gcov-11 --output-file coverage.info
-            lcov --remove coverage.info '*/test/*' --output-file coverage.info
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-            files: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir/coverage.info
