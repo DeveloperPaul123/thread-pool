@@ -46,6 +46,7 @@ target_link_options(
 )
 
 if(NOT WIN32 AND TP_THREAD_SANITIZER)
+    message(STATUS "Settings thread sanitizer flags.")
     target_compile_options(
             ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fsanitize=thread -g>
     )
