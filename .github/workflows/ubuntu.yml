@@ -89,7 +89,7 @@ jobs:
       #     version: 11
       #     platform: x64
       - name: Set up libs
-        run:
+        run: |
           sudo apt-get update
           sudo apt-get install aptitude
           sudo aptitude install libc6
