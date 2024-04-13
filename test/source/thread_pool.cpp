@@ -346,3 +346,38 @@ TEST_CASE("Recursive parallel sort") {
 
     CHECK(std::ranges::is_sorted(data));
 }
+
+
+TEST_CASE("Test premature exit") {
+    // two threads in pool, thread1, thread2
+    // first, push task_1
+    // task_1 pushes task_2 and sleeps, so both threads are busy and no tasks are in queue
+    // thread1 - task1, thread2 - task2
+    // task_1 finishes, no tasks in queue, but task_2 is still running --> thread1 must not exit
+    // task_2 pushes another task (end_task) and sleeps for 5s before finishing the task_2
+    // So the first thread, thread1 should execute the end_task
+    // but if the thread1 prematurely exits, than the end_task will be executed by the thread2
+
+    std::thread::id id_task_1, id_end;
+    {
+        dp::thread_pool<> testPool(2);
+
+        auto end = [&]() { id_end = std::this_thread::get_id(); };
+
+        auto task_2 = [&]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            testPool.enqueue_detach(end);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        };
+
+        auto task_1 = [&]() {
+            id_task_1 = std::this_thread::get_id();
+            testPool.enqueue_detach(task_2);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        };
+
+        testPool.enqueue_detach(task_1);
+    }
+
+    CHECK_EQ(id_task_1, id_end);
+}
