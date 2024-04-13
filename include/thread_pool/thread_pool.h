@@ -52,6 +52,7 @@ namespace dp {
                                     try {
                                         pending_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
+                                        total_tasks_.fetch_sub(1, std::memory_order_release);
                                     } catch (...) {
                                     }
                                 }
@@ -63,6 +64,7 @@ namespace dp {
                                         // steal a task
                                         pending_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
+                                        total_tasks_.fetch_sub(1, std::memory_order_release);
                                         // stop stealing once we have invoked a stolen task
                                         break;
                                     }
@@ -71,6 +73,10 @@ namespace dp {
                             } while (pending_tasks_.load(std::memory_order_acquire) > 0);
 
                             priority_queue_.rotate_to_front(id);
+
+                            if (total_tasks_.load(std::memory_order_acquire) == 0) {
+                                threads_done_.release();
+                            }
 
                         } while (!stop_tok.stop_requested());
                     });
@@ -90,6 +96,11 @@ namespace dp {
         }
 
         ~thread_pool() {
+            if (total_tasks_.load(std::memory_order_acquire) > 0) {
+                // wait for all tasks to finish
+                threads_done_.acquire();
+            }
+
             // stop all threads
             for (std::size_t i = 0; i < threads_.size(); ++i) {
                 threads_[i].request_stop();
@@ -204,6 +215,7 @@ namespace dp {
             }
             auto i = *(i_opt);
             pending_tasks_.fetch_add(1, std::memory_order_relaxed);
+            total_tasks_.fetch_add(1, std::memory_order_relaxed);
             tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
@@ -216,7 +228,8 @@ namespace dp {
         std::vector<ThreadType> threads_;
         std::deque<task_item> tasks_;
         dp::thread_safe_queue<std::size_t> priority_queue_;
-        std::atomic_int_fast64_t pending_tasks_{};
+        std::atomic_int_fast64_t pending_tasks_{}, total_tasks_{};
+        std::binary_semaphore threads_done_{0};
     };
 
     /**
