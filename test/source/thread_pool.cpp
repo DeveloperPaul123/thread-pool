@@ -362,15 +362,15 @@ TEST_CASE("Test premature exit") {
     {
         dp::thread_pool<> testPool(2);
 
-        auto end = [&]() { id_end = std::this_thread::get_id(); };
+        auto end = [&id_end]() { id_end = std::this_thread::get_id(); };
 
-        auto task_2 = [&]() {
+        auto task_2 = [&testPool, end]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             testPool.enqueue_detach(end);
             std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         };
 
-        auto task_1 = [&]() {
+        auto task_1 = [&testPool, &id_task_1, task_2]() {
             id_task_1 = std::this_thread::get_id();
             testPool.enqueue_detach(task_2);
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
