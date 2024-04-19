@@ -347,7 +347,6 @@ TEST_CASE("Recursive parallel sort") {
     CHECK(std::ranges::is_sorted(data));
 }
 
-
 TEST_CASE("Test premature exit") {
     // two threads in pool, thread1, thread2
     // first, push task_1
@@ -380,4 +379,47 @@ TEST_CASE("Test premature exit") {
     }
 
     CHECK_EQ(id_task_1, id_end);
+
+    // another scenario with 3 threads
+    // 3 tasks started, so all get pushed to a single thread
+    // threads 1 and 2 complete and there is no more work
+    // but thread 3's task pushes a new task.
+    // thread 3 sleeps right away so it's not available to handle the task, so thread 1 or 2 should
+    // handle it
+    std::thread::id spawn_task_id, task_1_id, task_2_id, task_3_id;
+    {
+        dp::thread_pool pool{3};
+
+        using namespace std::chrono_literals;
+        auto short_task = [] { std::this_thread::sleep_for(500ms); };
+        auto long_task = [] { std::this_thread::sleep_for(2000ms); };
+        auto task_1 = [&task_1_id, short_task] {
+            task_1_id = std::this_thread::get_id();
+            short_task();
+        };
+        auto task_2 = [&task_2_id, short_task] {
+            task_2_id = std::this_thread::get_id();
+            short_task();
+        };
+
+        auto spawned_task = [&spawn_task_id, short_task] {
+            spawn_task_id = std::this_thread::get_id();
+            short_task();
+        };
+
+        auto task_3 = [short_task, long_task, spawned_task, &task_3_id, &pool] {
+            task_3_id = std::this_thread::get_id();
+            short_task();
+            pool.enqueue_detach(spawned_task);
+            long_task();
+        };
+
+        pool.enqueue_detach(task_1);
+        pool.enqueue_detach(task_2);
+        pool.enqueue_detach(task_3);
+    }
+
+    // the task that spawns the new task should not run the new task
+    CHECK_NE(spawn_task_id, task_3_id);
+    CHECK_NE(task_1_id, task_2_id);
 }
