@@ -98,10 +98,7 @@ namespace dp {
         }
 
         ~thread_pool() {
-            if (completed_tasks_.load(std::memory_order_acquire) > 0) {
-                // wait for all tasks to finish
-                threads_done_.acquire();
-            }
+            wait_for_tasks();
 
             // stop all threads
             for (std::size_t i = 0; i < threads_.size(); ++i) {
@@ -206,6 +203,13 @@ namespace dp {
         }
 
         [[nodiscard]] auto size() const { return threads_.size(); }
+
+        void wait_for_tasks() {
+            if (completed_tasks_.load(std::memory_order_acquire) > 0) {
+                // wait for all tasks to finish
+                threads_done_.acquire();
+            }
+        }
 
       private:
         template <typename Function>

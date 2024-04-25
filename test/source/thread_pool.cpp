@@ -423,3 +423,25 @@ TEST_CASE("Test premature exit") {
     CHECK_NE(spawn_task_id, task_3_id);
     CHECK_NE(task_1_id, task_2_id);
 }
+
+TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
+    std::atomic counter = 0;
+    int total_tasks{};
+    constexpr auto thread_count = 4;
+
+    SUBCASE("with tasks") { total_tasks = 30; }
+    SUBCASE("with no tasks") { total_tasks = 0; }
+    SUBCASE("with task count less than thread count") { total_tasks = thread_count / 2; }
+
+    dp::thread_pool pool(thread_count);
+    for (auto i = 0; i < total_tasks; i++) {
+        auto task = [i, &counter]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 10));
+            ++counter;
+        };
+        pool.enqueue_detach(task);
+    }
+    pool.wait_for_tasks();
+
+    CHECK_EQ(counter.load(), total_tasks);
+}
