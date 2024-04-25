@@ -205,7 +205,7 @@ namespace dp {
         [[nodiscard]] auto size() const { return threads_.size(); }
 
         void wait_for_tasks() {
-            if (pending_tasks_.load(std::memory_order_acquire) > 0) {
+            if (completed_tasks_.load(std::memory_order_acquire) > 0) {
                 // wait for all tasks to finish
                 threads_done_.acquire();
             }
