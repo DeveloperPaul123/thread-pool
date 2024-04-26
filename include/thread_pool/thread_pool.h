@@ -34,14 +34,20 @@ namespace dp {
                  std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
       public:
+        template <typename InitializationFunction = std::function<void(std::size_t)>>
+            requires std::invocable<InitializationFunction, std::size_t> &&
+                     std::is_same_v<void, std::invoke_result_t<InitializationFunction, std::size_t>>
         explicit thread_pool(
-            const unsigned int &number_of_threads = std::thread::hardware_concurrency())
+            const unsigned int &number_of_threads = std::thread::hardware_concurrency(),
+            InitializationFunction init = [](std::size_t) {})
             : tasks_(number_of_threads) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 priority_queue_.push_back(size_t(current_id));
                 try {
-                    threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
+                    threads_.emplace_back([&, id = current_id,
+                                           init](const std::stop_token &stop_tok) {
+                        init(id);
                         do {
                             // wait until signaled
                             tasks_[id].signal.acquire();
