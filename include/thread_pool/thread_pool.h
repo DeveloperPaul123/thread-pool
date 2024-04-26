@@ -204,6 +204,10 @@ namespace dp {
 
         [[nodiscard]] auto size() const { return threads_.size(); }
 
+        /**
+         * @brief Wait for all tasks to finish.
+         * @details This function will block until all tasks have been completed.
+         */
         void wait_for_tasks() {
             if (completed_tasks_.load(std::memory_order_acquire) > 0) {
                 // wait for all tasks to finish
