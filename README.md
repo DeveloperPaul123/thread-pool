@@ -84,6 +84,21 @@ auto result = pool.enqueue([](int value) -> int { /*...your task...*/ return val
 auto value = result.get();
 ```
 
+Enqueue tasks and wait for them to complete:
+
+```cpp
+dp::thread_pool pool(4);
+
+// add tasks, in this case without caring about results of individual tasks
+pool.enqueue_detach([](int value) { /*...your task...*/ }, 34);
+pool.enqueue_detach([](int value) { /*...your task...*/ }, 37);
+pool.enqueue_detach([](int value) { /*...your task...*/ }, 38);
+pool.enqueue_detach([](int value) { /*...your task...*/ }, 40);
+
+// wait for all tasks to complete
+pool.wait_for_tasks();
+```
+
 You can see other examples in the `/examples` folder.
 
 ## Benchmarks
