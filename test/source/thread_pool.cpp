@@ -4,9 +4,9 @@
 #include <thread_pool/version.h>
 
 #include <algorithm>
+#include <format>
 #include <iostream>
 #include <numeric>
-#include <print>
 #include <random>
 #include <string>
 #include <thread>
@@ -451,7 +451,7 @@ TEST_CASE("Initialization function is called") {
     std::atomic_int counter = 0;
     {
         dp::thread_pool pool(4, [&counter](std::size_t id) {
-            std::print("Thread {} initialized\n", id);
+            std::cout << std::format("Thread {} initialized\n", id);
             counter.fetch_add(1);
         });
     }
