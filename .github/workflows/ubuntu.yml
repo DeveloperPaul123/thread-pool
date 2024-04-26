@@ -102,8 +102,8 @@ jobs:
       - name: configure clang
         run: cmake -S . -B build-clang -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
         env:
-          CC: clang
-          CXX: clang++
+          CC: clang-${{matrix.version}}
+          CXX: clang++-${{matrix.version}}
       
       - name: build
         run: cmake --build build-clang -j4
