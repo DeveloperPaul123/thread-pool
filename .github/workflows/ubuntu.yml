@@ -72,7 +72,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        version: [14, 15, 16, 17]
+        version: [14, 15, 16, 17, 18]
          
     steps:
       - uses: actions/checkout@v3
@@ -94,10 +94,10 @@ jobs:
           sudo apt-get install build-essential -y
         
       - name: Set up Clang
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: ${{ matrix.version }}
-          arch: x64
+        run: |
+          wget -O llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{matrix.version}}
 
       - name: configure clang
         run: cmake -S . -B build-clang -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=OFF -DCMAKE_BUILD_TYPE=Debug
