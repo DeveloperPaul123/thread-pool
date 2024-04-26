@@ -55,17 +55,20 @@ jobs:
     - name: Set up coverage tools
       run: |
           sudo apt-get install lcov gcovr -y
+      if: matrix.version == 11 && matrix.os == 'ubuntu-20.04'
 
     - name: Generate coverage report
       working-directory: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
       run: |
         lcov --directory . --capture --gcov gcov-11 --output-file coverage.info
         lcov --remove coverage.info '*/test/*' --output-file coverage.info
+      if: matrix.version == 11 && matrix.os == 'ubuntu-20.04'
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       with:
         files: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir/coverage.info
+      if: matrix.version == 11 && matrix.os == 'ubuntu-20.04'
 
   build-clang:
     name: "clang-${{matrix.version}}"
