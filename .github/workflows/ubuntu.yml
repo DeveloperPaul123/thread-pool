@@ -16,13 +16,17 @@ jobs:
   
   build-gcc:
     name: "gcc-${{ matrix.version }}"
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
     env:
       CPP_STANDARD: 20
     strategy:
         fail-fast: false
         matrix:
+            os: [ubuntu-20.04, ubuntu-latest]
             version: [11]
+            include:
+              - os: ubuntu-latest
+                version: 12
     steps:
     - uses: actions/checkout@v3
 
