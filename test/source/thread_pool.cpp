@@ -445,3 +445,14 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
 
     CHECK_EQ(counter.load(), total_tasks);
 }
+
+TEST_CASE("Initialization function is called") {
+    std::atomic_int counter = 0;
+    {
+        dp::thread_pool pool(4, [&counter](std::size_t id) {
+            std::cout << "Thread " << id << " initialized\n";
+            counter.fetch_add(1);
+        });
+    }
+    CHECK_EQ(counter.load(), 4);
+}
