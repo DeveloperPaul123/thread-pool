@@ -23,8 +23,10 @@ namespace dp {
 
 #ifdef __cpp_lib_move_only_function
         using default_function_type = std::move_only_function<void()>;
+        using barrier_function_type = std::move_only_function<void() noexcept>;
 #else
         using default_function_type = std::function<void()>;
+        using barrier_function_type = []() noexcept {};
 #endif
     }  // namespace details
 
@@ -36,11 +38,14 @@ namespace dp {
       public:
         template <typename InitializationFunction = std::function<void(std::size_t)>>
             requires std::invocable<InitializationFunction, std::size_t> &&
-                     std::is_same_v<void, std::invoke_result_t<InitializationFunction, std::size_t>>
+                         std::is_same_v<void,
+                                        std::invoke_result_t<InitializationFunction, std::size_t>>
         explicit thread_pool(
             const unsigned int &number_of_threads = std::thread::hardware_concurrency(),
             InitializationFunction init = [](std::size_t) {})
-            : tasks_(number_of_threads) {
+            : tasks_(number_of_threads), threads_done_(number_of_threads, [this]() noexcept {
+                  threads_complete_signal_.release();
+              }) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 priority_queue_.push_back(size_t(current_id));
@@ -89,7 +94,7 @@ namespace dp {
                             // check if all tasks are completed and release the barrier (binary
                             // semaphore)
                             if (in_flight_tasks_.load(std::memory_order_acquire) == 0) {
-                                threads_done_.release();
+                                threads_complete_signal_.release();
                             }
 
                         } while (!stop_tok.stop_requested());
@@ -105,6 +110,9 @@ namespace dp {
 
                     // remove our thread from the priority queue
                     std::ignore = priority_queue_.pop_back();
+
+                    // remove one item from the barrier
+                    threads_done_.arrive_and_drop();
                 }
             }
         }
@@ -229,7 +237,7 @@ namespace dp {
         void wait_for_tasks() {
             if (in_flight_tasks_.load(std::memory_order_acquire) > 0) {
                 // wait for all tasks to finish
-                threads_done_.acquire();
+                threads_complete_signal_.acquire();
             }
         }
 
@@ -257,7 +265,8 @@ namespace dp {
         std::deque<task_item> tasks_;
         dp::thread_safe_queue<std::size_t> priority_queue_;
         std::atomic_int_fast64_t unassigned_tasks_{}, in_flight_tasks_{};
-        std::binary_semaphore threads_done_{0};
+        std::barrier<details::barrier_function_type> threads_done_;
+        std::binary_semaphore threads_complete_signal_{0};
     };
 
     /**
