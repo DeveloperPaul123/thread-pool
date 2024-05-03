@@ -467,6 +467,33 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
     pool.wait_for_tasks();
 
     CHECK_EQ(counter.load(), total_tasks);
+
+    class counter_wrapper {
+      public:
+        counter_wrapper() = default;
+        std::atomic_int counter = 0;
+
+        void increment_counter() { counter.fetch_add(1); }
+    };
+
+    dp::thread_pool local_pool{};
+    std::vector<int> counts(17);
+    for (size_t i = 0; i < 17; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 17; var1++) {
+            for (int var2 = 0; var2 < 12; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter;
+    }
+
+    auto all_correct_count =
+        std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+    CHECK(all_correct_count);
 }
 
 TEST_CASE("Initialization function is called") {
