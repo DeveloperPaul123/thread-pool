@@ -236,8 +236,8 @@ namespace dp {
                 return;
             }
             auto i = *(i_opt);
-            unassigned_tasks_.fetch_add(1, std::memory_order_relaxed);
-            in_flight_tasks_.fetch_add(1, std::memory_order_relaxed);
+            unassigned_tasks_.fetch_add(1, std::memory_order_release);
+            in_flight_tasks_.fetch_add(1, std::memory_order_release);
             tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
