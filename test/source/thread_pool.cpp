@@ -467,18 +467,21 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
     pool.wait_for_tasks();
 
     CHECK_EQ(counter.load(), total_tasks);
+}
 
+TEST_CASE("Ensure wait_for_tasks() properly waits for tasks to fully complete") {
     class counter_wrapper {
       public:
         counter_wrapper() = default;
         std::atomic_int counter = 0;
 
-        void increment_counter() { counter.fetch_add(1); }
+        void increment_counter() { counter.fetch_add(1, std::memory_order_release); }
     };
 
     dp::thread_pool local_pool{};
-    std::vector<int> counts(17);
-    for (size_t i = 0; i < 17; i++) {
+    constexpr auto task_count = 10;
+    std::vector<int> counts(task_count);
+    for (size_t i = 0; i < task_count; i++) {
         counter_wrapper cnt_wrp{};
 
         for (size_t var1 = 0; var1 < 17; var1++) {
@@ -488,11 +491,13 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
         }
         local_pool.wait_for_tasks();
         // std::cout << cnt_wrp.counter << std::endl;
-        counts[i] = cnt_wrp.counter;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
     }
 
     auto all_correct_count =
         std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+    const auto sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 17 * 12 * task_count);
     CHECK(all_correct_count);
 }
 
