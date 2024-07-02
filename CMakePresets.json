@@ -1,155 +1,169 @@
 ﻿{
-  "version": 3,
-  "configurePresets": [
-    {
-      "name": "linux-base",
-      "hidden": true,
-      "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "vendor": {
-        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
-          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "linux-base",
+            "hidden": true,
+            "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+                }
+            }
+        },
+        {
+            "name": "windows-base",
+            "description": "Target Windows with the Visual Studio development environment.",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "gcc-base",
+            "hidden": true,
+            "inherits": "linux-base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "gcc-debug",
+            "inherits": "gcc-base",
+            "displayName": "GCC Debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "TP_THREAD_SANITIZER": "ON"
+            }
+        },
+        {
+            "name": "gcc-release",
+            "inherits": "gcc-base",
+            "displayName": "GCC Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "clang-base",
+            "hidden": true,
+            "inherits": "linux-base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "clang-debug",
+            "inherits": "clang-base",
+            "displayName": "Clang Debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "TP_THREAD_SANITIZER": "ON"
+            }
+        },
+        {
+            "name": "clang-release",
+            "inherits": "clang-base",
+            "displayName": "Clang Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "clang-release-with-debug-info",
+            "inherits": "clang-base",
+            "displayName": "Clang RelWithDebInfo",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "TP_THREAD_SANITIZER": "ON"
+            }
+        },
+        {
+            "name": "x64-debug",
+            "displayName": "x64 Debug",
+            "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
+            "inherits": "windows-base",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "x64-debug-clang",
+            "displayName": "x64 Debug Clang",
+            "description": "Target Windows (64-bit) with Clang",
+            "inherits": "windows-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "x64-release-clang",
+            "displayName": "x64 Release Clang",
+            "description": "Target Windows (64-bit) with Clang (Release)",
+            "inherits": "windows-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "x64-release",
+            "displayName": "x64 Release",
+            "description": "Target Windows (64-bit) with the Visual Studio development environment. (Release)",
+            "inherits": "x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "x64-release-with-debug",
+            "displayName": "x64 Release w/Debug",
+            "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+            "inherits": "x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "x64-windows-vcpkg",
+            "displayName": "Install only",
+            "description": "Target Windows x64 Release without any build targets",
+            "inherits": "x64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "TP_BUILD_TESTS": "OFF",
+                "TP_BUILD_EXAMPLES": "OFF",
+                "TP_BUILD_BENCHMARKS": "OFF"
+            }
         }
-      }
-    },
-    {
-      "name": "windows-base",
-      "description": "Target Windows with the Visual Studio development environment.",
-      "hidden": true,
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "installDir": "${sourceDir}/out/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "cl"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      },
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      }
-    },
-    {
-      "name": "gcc-base",
-      "hidden": true,
-      "inherits": "linux-base",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "g++"
-      }
-    },
-    {
-      "name": "gcc-debug",
-      "inherits": "gcc-base",
-      "displayName": "GCC Debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "TP_THREAD_SANITIZER": "ON"
-      }
-    },
-    {
-      "name": "gcc-release",
-      "inherits": "gcc-base",
-      "displayName": "GCC Release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
-    },
-    {
-      "name": "clang-base",
-      "hidden": true,
-      "inherits": "linux-base",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++"
-      }
-    },
-    {
-      "name": "clang-debug",
-      "inherits": "clang-base",
-      "displayName": "Clang Debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "TP_THREAD_SANITIZER": "ON"
-      }
-    },
-    {
-      "name": "clang-release",
-      "inherits": "clang-base",
-      "displayName": "Clang Release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
-    },
-    {
-      "name": "clang-release-with-debug-info",
-      "inherits": "clang-base",
-      "displayName": "Clang RelWithDebInfo",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "TP_THREAD_SANITIZER": "ON"
-      }
-    },
-    {
-      "name": "x64-debug",
-      "displayName": "x64 Debug",
-      "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
-      "inherits": "windows-base",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
-    },
-    {
-      "name": "x64-debug-clang",
-      "displayName": "x64 Debug Clang",
-      "description": "Target Windows (64-bit) with Clang",
-      "inherits": "windows-base",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
-      }
-    },
-    {
-      "name": "x64-release-clang",
-      "displayName": "x64 Release Clang",
-      "description": "Target Windows (64-bit) with Clang (Release)",
-      "inherits": "windows-base",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "x64-release",
-      "displayName": "x64 Release",
-      "description": "Target Windows (64-bit) with the Visual Studio development environment. (Release)",
-      "inherits": "x64-debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
-    },
-    {
-      "name": "x64-release-with-debug",
-      "displayName": "x64 Release w/Debug",
-      "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
-      "inherits": "x64-debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
-    },
-    {
-      "name": "x64-windows-vcpkg",
-      "displayName": "Install only",
-      "description": "Target Windows x64 Release without any build targets",
-      "inherits": "x64-release",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "TP_BUILD_TESTS": "OFF",
-        "TP_BUILD_EXAMPLES": "OFF",
-        "TP_BUILD_BENCHMARKS": "OFF"
-      }
-    }
-  ]
+    ]
 }
