@@ -56,6 +56,29 @@ TEST_CASE("Support enqueue with void return type") {
     CHECK_EQ(value, 16);
 }
 
+TEST_CASE("Support enqueue_detach with void return type") {
+    auto value = 8;
+    {
+        dp::thread_pool pool;
+        pool.enqueue_detach([](int& x) { x *= 2; }, std::ref(value));
+    }
+    CHECK_EQ(value, 16);
+}
+
+TEST_CASE("Support enqueue_detach with non void return type") {
+    auto value = 8;
+    {
+        dp::thread_pool pool;
+        pool.enqueue_detach(
+            [](int& x) {
+                x *= 2;
+                return x;
+            },
+            std::ref(value));
+    }
+    CHECK_EQ(value, 16);
+}
+
 TEST_CASE("Ensure input params are properly passed") {
     dp::thread_pool pool(4);
     constexpr auto total_tasks = 30;
