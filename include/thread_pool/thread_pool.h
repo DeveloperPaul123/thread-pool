@@ -187,25 +187,31 @@ namespace dp {
         }
 
         /**
-         * @brief Enqueue a task to be executed in the thread pool that returns void.
+         * @brief Enqueue a task to be executed in the thread pool. Any return value of the function
+         * will be ignored.
          * @tparam Function An invokable type.
          * @tparam Args Argument parameter pack for Function
          * @param func The callable to be executed
          * @param args Arguments that will be passed to the function.
          */
         template <typename Function, typename... Args>
-            requires std::invocable<Function, Args...> &&
-                     std::is_same_v<void, std::invoke_result_t<Function &&, Args &&...>>
+            requires std::invocable<Function, Args...>
         void enqueue_detach(Function &&func, Args &&...args) {
-            enqueue_task(
-                std::move([f = std::forward<Function>(func),
-                           ... largs = std::forward<Args>(args)]() mutable -> decltype(auto) {
-                    // suppress exceptions
-                    try {
+            enqueue_task(std::move([f = std::forward<Function>(func),
+                                    ... largs =
+                                        std::forward<Args>(args)]() mutable -> decltype(auto) {
+                // suppress exceptions
+                try {
+                    if constexpr (std::is_same_v<void,
+                                                 std::invoke_result_t<Function &&, Args &&...>>) {
                         std::invoke(f, largs...);
-                    } catch (...) {
+                    } else {
+                        // the function returns an argument, but can be ignored
+                        std::ignore = std::invoke(f, largs...);
                     }
-                }));
+                } catch (...) {
+                }
+            }));
         }
 
         [[nodiscard]] auto size() const { return threads_.size(); }
