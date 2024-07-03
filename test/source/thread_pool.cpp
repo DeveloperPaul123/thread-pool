@@ -449,7 +449,6 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
 TEST_CASE("Ensure wait_for_tasks() properly waits for tasks to fully complete") {
     class counter_wrapper {
       public:
-        counter_wrapper() = default;
         std::atomic_int counter = 0;
 
         void increment_counter() { counter.fetch_add(1, std::memory_order_release); }
@@ -457,7 +456,7 @@ TEST_CASE("Ensure wait_for_tasks() properly waits for tasks to fully complete") 
 
     dp::thread_pool local_pool{};
     constexpr auto task_count = 10;
-    std::vector<int> counts(task_count);
+    std::array<int, task_count> counts{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
     for (size_t i = 0; i < task_count; i++) {
         counter_wrapper cnt_wrp{};
 
