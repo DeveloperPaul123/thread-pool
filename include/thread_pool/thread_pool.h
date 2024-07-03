@@ -54,18 +54,15 @@ namespace dp {
                             do {
                                 // invoke the task
                                 while (auto task = tasks_[id].tasks.pop_front()) {
-                                    try {
-                                        // decrement the unassigned tasks as the task is now going
-                                        // to be executed
-                                        unassigned_tasks_.fetch_sub(1, std::memory_order_release);
-                                        // invoke the task
-                                        std::invoke(std::move(task.value()));
-                                        // the above task can push more work onto the pool, so we
-                                        // only decrement the in flights once the task has been
-                                        // executed because now it's now longer "in flight"
-                                        in_flight_tasks_.fetch_sub(1, std::memory_order_release);
-                                    } catch (...) {
-                                    }
+                                    // decrement the unassigned tasks as the task is now going
+                                    // to be executed
+                                    unassigned_tasks_.fetch_sub(1, std::memory_order_release);
+                                    // invoke the task
+                                    std::invoke(std::move(task.value()));
+                                    // the above task can push more work onto the pool, so we
+                                    // only decrement the in flights once the task has been
+                                    // executed because now it's now longer "in flight"
+                                    in_flight_tasks_.fetch_sub(1, std::memory_order_release);
                                 }
 
                                 // try to steal a task
@@ -241,6 +238,7 @@ namespace dp {
                 // would only be a problem if there are zero threads
                 return;
             }
+            // get the index
             auto i = *(i_opt);
             unassigned_tasks_.fetch_add(1, std::memory_order_release);
             const auto prev_in_flight = in_flight_tasks_.fetch_add(1, std::memory_order_release);
@@ -250,6 +248,7 @@ namespace dp {
                 threads_complete_signal_.store(false, std::memory_order_release);
             }
 
+            // assign work
             tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
