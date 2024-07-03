@@ -237,7 +237,13 @@ namespace dp {
             }
             auto i = *(i_opt);
             unassigned_tasks_.fetch_add(1, std::memory_order_release);
-            in_flight_tasks_.fetch_add(1, std::memory_order_release);
+            const auto prev_in_flight = in_flight_tasks_.fetch_add(1, std::memory_order_release);
+
+            // reset the in flight signal if the list was previously empty
+            if (prev_in_flight == 0) {
+                threads_complete_signal_.store(false, std::memory_order_release);
+            }
+
             tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
@@ -250,7 +256,8 @@ namespace dp {
         std::vector<ThreadType> threads_;
         std::deque<task_item> tasks_;
         dp::thread_safe_queue<std::size_t> priority_queue_;
-        std::atomic_int_fast64_t unassigned_tasks_{}, in_flight_tasks_{};
+        // guarantee these get zero-initialized
+        std::atomic_int_fast64_t unassigned_tasks_{0}, in_flight_tasks_{0};
         std::atomic_bool threads_complete_signal_{false};
     };
 
