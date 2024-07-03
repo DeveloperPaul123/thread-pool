@@ -4,12 +4,12 @@
 #include <thread_pool/version.h>
 
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <numeric>
 #include <random>
 #include <string>
 #include <thread>
-#include <array>
 
 auto multiply(int a, int b) { return a * b; }
 
