@@ -9,6 +9,7 @@
 #include <random>
 #include <string>
 #include <thread>
+#include <array>
 
 auto multiply(int a, int b) { return a * b; }
 
@@ -514,8 +515,8 @@ TEST_CASE("Ensure wait_for_tasks() can be called multiple times on the same pool
     for (size_t i = 0; i < task_count; i++) {
         counter_wrapper cnt_wrp{};
 
-        for (size_t var1 = 0; var1 < 17; var1++) {
-            for (int var2 = 0; var2 < 12; var2++) {
+        for (size_t var1 = 0; var1 < 16; var1++) {
+            for (int var2 = 0; var2 < 13; var2++) {
                 local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
             }
         }
@@ -525,9 +526,9 @@ TEST_CASE("Ensure wait_for_tasks() can be called multiple times on the same pool
     }
 
     auto all_correct_count =
-        std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+        std::ranges::all_of(counts, [](int count) { return count == 16 * 13; });
     auto sum = std::accumulate(counts.begin(), counts.end(), 0);
-    CHECK_EQ(sum, 17 * 12 * task_count);
+    CHECK_EQ(sum, 16 * 13 * task_count);
     CHECK(all_correct_count);
 
     for (size_t i = 0; i < task_count; i++) {
