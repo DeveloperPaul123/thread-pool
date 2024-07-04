@@ -217,6 +217,11 @@ namespace dp {
             }));
         }
 
+        /**
+         * @brief Returns the number of threads in the pool.
+         *
+         * @return std::size_t The number of threads in the pool.
+         */
         [[nodiscard]] auto size() const { return threads_.size(); }
 
         /**
@@ -240,6 +245,8 @@ namespace dp {
             }
             // get the index
             auto i = *(i_opt);
+
+            // increment the unassigned tasks and in flight tasks
             unassigned_tasks_.fetch_add(1, std::memory_order_release);
             const auto prev_in_flight = in_flight_tasks_.fetch_add(1, std::memory_order_release);
 
