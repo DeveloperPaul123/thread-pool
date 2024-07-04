@@ -46,7 +46,13 @@ namespace dp {
                 try {
                     threads_.emplace_back([&, id = current_id,
                                            init](const std::stop_token &stop_tok) {
-                        init(id);
+                        // invoke the init function on the thread
+                        try {
+                            std::invoke(init, id);
+                        } catch (...) {
+                            // suppress exceptions
+                        }
+
                         do {
                             // wait until signaled
                             tasks_[id].signal.acquire();
