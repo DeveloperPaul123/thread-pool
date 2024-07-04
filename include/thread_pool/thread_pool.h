@@ -91,7 +91,7 @@ namespace dp {
                             // check if all tasks are completed and release the barrier (binary
                             // semaphore)
                             if (in_flight_tasks_.load(std::memory_order_acquire) == 0) {
-                                threads_complete_signal_ = true;
+                                threads_complete_signal_.store(true, std::memory_order_release);
                                 threads_complete_signal_.notify_one();
                             }
 
