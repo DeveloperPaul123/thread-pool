@@ -4,6 +4,7 @@
 #include <thread_pool/version.h>
 
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -467,6 +468,86 @@ TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
     pool.wait_for_tasks();
 
     CHECK_EQ(counter.load(), total_tasks);
+}
+
+TEST_CASE("Ensure wait_for_tasks() properly waits for tasks to fully complete") {
+    class counter_wrapper {
+      public:
+        std::atomic_int counter = 0;
+
+        void increment_counter() { counter.fetch_add(1, std::memory_order_release); }
+    };
+
+    dp::thread_pool local_pool{};
+    constexpr auto task_count = 10;
+    std::array<int, task_count> counts{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+    for (size_t i = 0; i < task_count; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 17; var1++) {
+            for (int var2 = 0; var2 < 12; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
+    }
+
+    auto all_correct_count =
+        std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+    const auto sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 17 * 12 * task_count);
+    CHECK(all_correct_count);
+}
+
+TEST_CASE("Ensure wait_for_tasks() can be called multiple times on the same pool") {
+    class counter_wrapper {
+      public:
+        std::atomic_int counter = 0;
+
+        void increment_counter() { counter.fetch_add(1, std::memory_order_release); }
+    };
+
+    dp::thread_pool local_pool{};
+    constexpr auto task_count = 10;
+    std::array<int, task_count> counts{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+    for (size_t i = 0; i < task_count; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 16; var1++) {
+            for (int var2 = 0; var2 < 13; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
+    }
+
+    auto all_correct_count =
+        std::ranges::all_of(counts, [](int count) { return count == 16 * 13; });
+    auto sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 16 * 13 * task_count);
+    CHECK(all_correct_count);
+
+    for (size_t i = 0; i < task_count; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 17; var1++) {
+            for (int var2 = 0; var2 < 12; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
+    }
+
+    all_correct_count = std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+    sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 17 * 12 * task_count);
+    CHECK(all_correct_count);
 }
 
 TEST_CASE("Initialization function is called") {
