@@ -4,6 +4,7 @@
 #include <thread_pool/version.h>
 
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -53,6 +54,29 @@ TEST_CASE("Support enqueue with void return type") {
     auto value = 8;
     auto future = pool.enqueue([](int& x) { x *= 2; }, std::ref(value));
     future.wait();
+    CHECK_EQ(value, 16);
+}
+
+TEST_CASE("Support enqueue_detach with void return type") {
+    auto value = 8;
+    {
+        dp::thread_pool pool;
+        pool.enqueue_detach([](int& x) { x *= 2; }, std::ref(value));
+    }
+    CHECK_EQ(value, 16);
+}
+
+TEST_CASE("Support enqueue_detach with non void return type") {
+    auto value = 8;
+    {
+        dp::thread_pool pool;
+        pool.enqueue_detach(
+            [](int& x) {
+                x *= 2;
+                return x;
+            },
+            std::ref(value));
+    }
     CHECK_EQ(value, 16);
 }
 
@@ -345,4 +369,194 @@ TEST_CASE("Recursive parallel sort") {
     }
 
     CHECK(std::ranges::is_sorted(data));
+}
+
+TEST_CASE("Test premature exit") {
+    // two threads in pool, thread1, thread2
+    // first, push task_1
+    // task_1 pushes task_2 and sleeps, so both threads are busy and no tasks are in queue
+    // thread1 - task1, thread2 - task2
+    // task_1 finishes, no tasks in queue, but task_2 is still running --> thread1 must not exit
+    // task_2 pushes another task (end_task) and sleeps for 5s before finishing the task_2
+    // So the first thread, thread1 should execute the end_task
+    // but if the thread1 prematurely exits, than the end_task will be executed by the thread2
+
+    std::thread::id id_task_1, id_end;
+    {
+        dp::thread_pool<> testPool(2);
+
+        auto end = [&id_end]() { id_end = std::this_thread::get_id(); };
+
+        auto task_2 = [&testPool, end]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            testPool.enqueue_detach(end);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        };
+
+        auto task_1 = [&testPool, &id_task_1, task_2]() {
+            id_task_1 = std::this_thread::get_id();
+            testPool.enqueue_detach(task_2);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        };
+
+        testPool.enqueue_detach(task_1);
+    }
+
+    CHECK_EQ(id_task_1, id_end);
+
+    // another scenario with 3 threads
+    // 3 tasks started, so all get pushed to a single thread
+    // threads 1 and 2 complete and there is no more work
+    // but thread 3's task pushes a new task.
+    // thread 3 sleeps right away so it's not available to handle the task, so thread 1 or 2 should
+    // handle it
+    std::thread::id spawn_task_id, task_1_id, task_2_id, task_3_id;
+    {
+        dp::thread_pool pool{3};
+
+        using namespace std::chrono_literals;
+        auto short_task = [] { std::this_thread::sleep_for(500ms); };
+        auto long_task = [] { std::this_thread::sleep_for(2000ms); };
+        auto task_1 = [&task_1_id, short_task] {
+            task_1_id = std::this_thread::get_id();
+            short_task();
+        };
+        auto task_2 = [&task_2_id, short_task] {
+            task_2_id = std::this_thread::get_id();
+            short_task();
+        };
+
+        auto spawned_task = [&spawn_task_id, short_task] {
+            spawn_task_id = std::this_thread::get_id();
+            short_task();
+        };
+
+        auto task_3 = [short_task, long_task, spawned_task, &task_3_id, &pool] {
+            task_3_id = std::this_thread::get_id();
+            short_task();
+            pool.enqueue_detach(spawned_task);
+            long_task();
+        };
+
+        pool.enqueue_detach(task_1);
+        pool.enqueue_detach(task_2);
+        pool.enqueue_detach(task_3);
+    }
+
+    // the task that spawns the new task should not run the new task
+    CHECK_NE(spawn_task_id, task_3_id);
+    CHECK_NE(task_1_id, task_2_id);
+}
+
+TEST_CASE("Ensure wait_for_tasks() properly blocks current execution.") {
+    std::atomic counter = 0;
+    int total_tasks{};
+    constexpr auto thread_count = 4;
+
+    SUBCASE("with tasks") { total_tasks = 30; }
+    SUBCASE("with no tasks") { total_tasks = 0; }
+    SUBCASE("with task count less than thread count") { total_tasks = thread_count / 2; }
+
+    dp::thread_pool pool(thread_count);
+    for (auto i = 0; i < total_tasks; i++) {
+        auto task = [i, &counter]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds((i + 1) * 10));
+            ++counter;
+        };
+        pool.enqueue_detach(task);
+    }
+    pool.wait_for_tasks();
+
+    CHECK_EQ(counter.load(), total_tasks);
+}
+
+TEST_CASE("Ensure wait_for_tasks() properly waits for tasks to fully complete") {
+    class counter_wrapper {
+      public:
+        std::atomic_int counter = 0;
+
+        void increment_counter() { counter.fetch_add(1, std::memory_order_release); }
+    };
+
+    dp::thread_pool local_pool{};
+    constexpr auto task_count = 10;
+    std::array<int, task_count> counts{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+    for (size_t i = 0; i < task_count; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 17; var1++) {
+            for (int var2 = 0; var2 < 12; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
+    }
+
+    auto all_correct_count =
+        std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+    const auto sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 17 * 12 * task_count);
+    CHECK(all_correct_count);
+}
+
+TEST_CASE("Ensure wait_for_tasks() can be called multiple times on the same pool") {
+    class counter_wrapper {
+      public:
+        std::atomic_int counter = 0;
+
+        void increment_counter() { counter.fetch_add(1, std::memory_order_release); }
+    };
+
+    dp::thread_pool local_pool{};
+    constexpr auto task_count = 10;
+    std::array<int, task_count> counts{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+    for (size_t i = 0; i < task_count; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 16; var1++) {
+            for (int var2 = 0; var2 < 13; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
+    }
+
+    auto all_correct_count =
+        std::ranges::all_of(counts, [](int count) { return count == 16 * 13; });
+    auto sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 16 * 13 * task_count);
+    CHECK(all_correct_count);
+
+    for (size_t i = 0; i < task_count; i++) {
+        counter_wrapper cnt_wrp{};
+
+        for (size_t var1 = 0; var1 < 17; var1++) {
+            for (int var2 = 0; var2 < 12; var2++) {
+                local_pool.enqueue_detach([&cnt_wrp]() { cnt_wrp.increment_counter(); });
+            }
+        }
+        local_pool.wait_for_tasks();
+        // std::cout << cnt_wrp.counter << std::endl;
+        counts[i] = cnt_wrp.counter.load(std::memory_order_acquire);
+    }
+
+    all_correct_count = std::ranges::all_of(counts, [](int count) { return count == 17 * 12; });
+    sum = std::accumulate(counts.begin(), counts.end(), 0);
+    CHECK_EQ(sum, 17 * 12 * task_count);
+    CHECK(all_correct_count);
+}
+
+TEST_CASE("Initialization function is called") {
+    std::atomic_int counter = 0;
+    {
+        dp::thread_pool pool(4, [&counter](std::size_t id) {
+            std::cout << "Thread " << id << " initialized\n";
+            counter.fetch_add(1);
+        });
+    }
+    CHECK_EQ(counter.load(), 4);
 }

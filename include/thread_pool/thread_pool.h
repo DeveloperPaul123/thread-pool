@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <barrier>
 #include <concepts>
 #include <deque>
 #include <functional>
@@ -36,38 +35,67 @@ namespace dp {
                  std::is_same_v<void, std::invoke_result_t<FunctionType>>
     class thread_pool {
       public:
+        template <typename InitializationFunction = std::function<void(std::size_t)>>
+            requires std::invocable<InitializationFunction, std::size_t> &&
+                     std::is_same_v<void, std::invoke_result_t<InitializationFunction, std::size_t>>
         explicit thread_pool(
-            const unsigned int &number_of_threads = std::thread::hardware_concurrency())
+            const unsigned int &number_of_threads = std::thread::hardware_concurrency(),
+            InitializationFunction init = [](std::size_t) {})
             : tasks_(number_of_threads) {
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 priority_queue_.push_back(size_t(current_id));
                 try {
-                    threads_.emplace_back([&, id = current_id](const std::stop_token &stop_tok) {
+                    threads_.emplace_back([&, id = current_id,
+                                           init](const std::stop_token &stop_tok) {
+                        // invoke the init function on the thread
+                        try {
+                            std::invoke(init, id);
+                        } catch (...) {
+                            // suppress exceptions
+                        }
+
                         do {
                             // wait until signaled
                             tasks_[id].signal.acquire();
 
                             do {
                                 // invoke the task
-                                while (auto task = tasks_[id].tasks.pop_top()) {
-                                    try {
-                                        pending_tasks_.fetch_sub(1, std::memory_order_release);
+                                while (auto task = tasks_[id].tasks.pop_front()) {
+                                    // decrement the unassigned tasks as the task is now going
+                                    // to be executed
+                                    unassigned_tasks_.fetch_sub(1, std::memory_order_release);
+                                    // invoke the task
+                                    std::invoke(std::move(task.value()));
+                                    // the above task can push more work onto the pool, so we
+                                    // only decrement the in flights once the task has been
+                                    // executed because now it's now longer "in flight"
+                                    in_flight_tasks_.fetch_sub(1, std::memory_order_release);
+                                }
+
+                                // try to steal a task
+                                for (std::size_t j = 1; j < tasks_.size(); ++j) {
+                                    const std::size_t index = (id + j) % tasks_.size();
+                                    if (auto task = tasks_[index].tasks.steal()) {
+                                        // steal a task
+                                        unassigned_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
-                                    } catch (...) {
+                                        in_flight_tasks_.fetch_sub(1, std::memory_order_release);
+                                        // stop stealing once we have invoked a stolen task
+                                        break;
                                     }
                                 }
-
-                                // try to steal a task from our donor
-                                auto donor_index = (id + 1) % tasks_.size();
-                                if (auto task = tasks_[donor_index].tasks.pop_top()) {
-                                    pending_tasks_.fetch_sub(1, std::memory_order_release);
-                                    std::invoke(std::move(task.value()));
-                                }
-
-                            } while (pending_tasks_.load(std::memory_order_acquire) > 0);
+                                // check if there are any unassigned tasks before rotating to the
+                                // front and waiting for more work
+                            } while (unassigned_tasks_.load(std::memory_order_acquire) > 0);
 
                             priority_queue_.rotate_to_front(id);
+                            // check if all tasks are completed and release the barrier (binary
+                            // semaphore)
+                            if (in_flight_tasks_.load(std::memory_order_acquire) == 0) {
+                                threads_complete_signal_.store(true, std::memory_order_release);
+                                threads_complete_signal_.notify_one();
+                            }
 
                         } while (!stop_tok.stop_requested());
                     });
@@ -87,6 +115,8 @@ namespace dp {
         }
 
         ~thread_pool() {
+            wait_for_tasks();
+
             // stop all threads
             for (std::size_t i = 0; i < threads_.size(); ++i) {
                 threads_[i].request_stop();
@@ -168,28 +198,50 @@ namespace dp {
         }
 
         /**
-         * @brief Enqueue a task to be executed in the thread pool that returns void.
+         * @brief Enqueue a task to be executed in the thread pool. Any return value of the function
+         * will be ignored.
          * @tparam Function An invokable type.
          * @tparam Args Argument parameter pack for Function
          * @param func The callable to be executed
          * @param args Arguments that will be passed to the function.
          */
         template <typename Function, typename... Args>
-            requires std::invocable<Function, Args...> &&
-                     std::is_same_v<void, std::invoke_result_t<Function &&, Args &&...>>
+            requires std::invocable<Function, Args...>
         void enqueue_detach(Function &&func, Args &&...args) {
-            enqueue_task(
-                std::move([f = std::forward<Function>(func),
-                           ... largs = std::forward<Args>(args)]() mutable -> decltype(auto) {
-                    // suppress exceptions
-                    try {
+            enqueue_task(std::move([f = std::forward<Function>(func),
+                                    ... largs =
+                                        std::forward<Args>(args)]() mutable -> decltype(auto) {
+                // suppress exceptions
+                try {
+                    if constexpr (std::is_same_v<void,
+                                                 std::invoke_result_t<Function &&, Args &&...>>) {
                         std::invoke(f, largs...);
-                    } catch (...) {
+                    } else {
+                        // the function returns an argument, but can be ignored
+                        std::ignore = std::invoke(f, largs...);
                     }
-                }));
+                } catch (...) {
+                }
+            }));
         }
 
+        /**
+         * @brief Returns the number of threads in the pool.
+         *
+         * @return std::size_t The number of threads in the pool.
+         */
         [[nodiscard]] auto size() const { return threads_.size(); }
+
+        /**
+         * @brief Wait for all tasks to finish.
+         * @details This function will block until all tasks have been completed.
+         */
+        void wait_for_tasks() {
+            if (in_flight_tasks_.load(std::memory_order_acquire) > 0) {
+                // wait for all tasks to finish
+                threads_complete_signal_.wait(false);
+            }
+        }
 
       private:
         template <typename Function>
@@ -199,9 +251,20 @@ namespace dp {
                 // would only be a problem if there are zero threads
                 return;
             }
+            // get the index
             auto i = *(i_opt);
-            pending_tasks_.fetch_add(1, std::memory_order_relaxed);
-            tasks_[i].tasks.push_bottom(std::forward<Function>(f));
+
+            // increment the unassigned tasks and in flight tasks
+            unassigned_tasks_.fetch_add(1, std::memory_order_release);
+            const auto prev_in_flight = in_flight_tasks_.fetch_add(1, std::memory_order_release);
+
+            // reset the in flight signal if the list was previously empty
+            if (prev_in_flight == 0) {
+                threads_complete_signal_.store(false, std::memory_order_release);
+            }
+
+            // assign work
+            tasks_[i].tasks.push_back(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
 
@@ -213,7 +276,9 @@ namespace dp {
         std::vector<ThreadType> threads_;
         std::deque<task_item> tasks_;
         dp::thread_safe_queue<std::size_t> priority_queue_;
-        std::atomic_int_fast64_t pending_tasks_{};
+        // guarantee these get zero-initialized
+        std::atomic_int_fast64_t unassigned_tasks_{0}, in_flight_tasks_{0};
+        std::atomic_bool threads_complete_signal_{false};
     };
 
     /**
