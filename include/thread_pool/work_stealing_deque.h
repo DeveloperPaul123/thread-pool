@@ -29,36 +29,44 @@ namespace dp {
      * This is an implementation of the deque described in "Correct and Efficient Work-Stealing for
      * Weak Memory Models" and "Dynamic Circular Work-Stealing Deque" by Chase,Lev.
      *
+     * This implementation is taken from the following implementations
+     * - https://github.com/ConorWilliams/ConcurrentDeque/blob/main/include/riften/deque.hpp
+     * - https://github.com/taskflow/work-stealing-queue/blob/master/wsq.hpp
+     *
+     * I've made some minor edits and changes based on new C++ 23 features and other personal coding
+     * style choices/preferences.
      */
     template <typename T>
         requires std::is_destructible_v<T>
     class work_stealing_deque final {
         /**
          * @brief Simple circular array buffer that can regrow
-         * TODO: Leverage std::pmr facilities to automatically allocate/reclaim memory?
          */
         class circular_buffer final {
+            std::int64_t size_;
+            std::int64_t mask_;
+            std::unique_ptr<T[]> buffer_ = std::make_unique_for_overwrite<T[]>(size_);
+
           public:
             explicit circular_buffer(const std::int64_t size) : size_(size), mask_(size - 1) {
                 // size must be a power of 2
                 assert((size % 2) == 0);
-
-                buffer_ = std::make_unique_for_overwrite<T[]>(size_);
-                pointer_.store(buffer_.get(), release);
             }
 
             [[nodiscard]] std::int64_t capacity() const noexcept { return size_; }
 
-            void store(const std::size_t index, T value, std::memory_order order = acquire) noexcept
+            void store(const std::size_t index, T&& value) noexcept
                 requires std::is_move_assignable_v<T>
             {
-                auto buf = pointer_.load(order);
-                buf[index & mask_] = value;
+                buffer_[index & mask_] = std::move(value);
             }
 
-            T load(const std::size_t index, std::memory_order order = acquire) noexcept {
-                auto buf = pointer_.load(order);
-                return buf[index & mask_];
+            T&& load(const std::size_t index) noexcept {
+                if constexpr (std::is_move_constructible_v<T>) {
+                    return std::move(buffer_[index & mask_]);
+                } else {
+                    return buffer_[index & mask_];
+                }
             }
 
             /**
@@ -73,12 +81,6 @@ namespace dp {
                 }
                 return temp;
             }
-
-          private:
-            std::int64_t size_;
-            std::int64_t mask_;
-            std::atomic<T*> pointer_;
-            std::unique_ptr<T[]> buffer_;
         };
 
         constexpr static std::size_t default_count = 1024;
@@ -109,25 +111,27 @@ namespace dp {
             return static_cast<std::size_t>(bottom >= top ? bottom - top : 0);
         }
 
-        [[nodiscard]] bool empty() const { return size() == 0; }
+        [[nodiscard]] bool empty() const { return !size(); }
+
         template <typename... Args>
-        void push_bottom(Args&&... args) {
+        void emplace(Args&&... args) {
             // construct first in case it throws
             T value(std::forward<Args>(args)...);
             push_bottom(std::move(value));
         }
 
-        void push_bottom(T value) {
+        void push_bottom(T&& value) {
             auto bottom = bottom_.load(relaxed);
             auto top = top_.load(acquire);
-            auto buffer = buffer_.load(relaxed);
+            auto* buffer = buffer_.load(relaxed);
 
-            if (buffer->capacity() < (bottom - top) + 1) {
+            // check if the buffer is full
+            if (buffer->capacity() - 1 < (bottom - top)) {
                 garbage_.emplace_back(std::exchange(buffer, buffer->resize(top, bottom)));
-                buffer_.store(buffer, release);
+                buffer_.store(buffer, relaxed);
             }
 
-            buffer->store(bottom, std::move(value));
+            buffer->store(bottom, std::forward<T>(value));
 
             // this synchronizes with other acquire fences
             // memory operations about this line cannot be reordered
@@ -138,18 +142,21 @@ namespace dp {
 
         std::optional<T> take_bottom() {
             auto bottom = bottom_.load(relaxed) - 1;
-            auto buffer = buffer_.load(relaxed);
+            auto* buffer = buffer_.load(relaxed);
 
             // prevent stealing
             bottom_.store(bottom, relaxed);
 
             // this synchronizes with other release fences
             // memory ops below this line cannot be reordered
-            std::atomic_thread_fence(acquire);
+            std::atomic_thread_fence(seq_cst);
+
+            std::optional<T> item = std::nullopt;
 
             auto top = top_.load(relaxed);
             if (top <= bottom) {
                 // queue isn't empty
+                item = buffer->load(bottom);
                 if (top == bottom) {
                     // there is only 1 item left in the queue, we need the CAS to succeed
                     // since another thread may be trying to steal and could steal before we're able
@@ -157,38 +164,42 @@ namespace dp {
                     if (!top_.compare_exchange_strong(top, top + 1, seq_cst, relaxed)) {
                         // failed race
                         bottom_.store(bottom + 1, relaxed);
-                        return std::nullopt;
+                        item = std::nullopt;
                     }
                     bottom_.store(bottom + 1, relaxed);
                 }
-                // there is more than one item in the queue, we can take the bottom
-                return buffer->load(bottom);
+            } else {
+                bottom_.store(bottom + 1, relaxed);
             }
-            // queue is empty, reset bottom
-            bottom_.store(bottom + 1, relaxed);
-            return std::nullopt;
+
+            return item;
         }
 
+        /**
+         * @brief Steal from the top of the queue
+         *
+         * @return std::optional<T>
+         */
         std::optional<T> pop_top() {
             auto top = top_.load(acquire);
             // this synchronizes with other release fences
             // memory ops below this line cannot be reordered with ops above this line
-            std::atomic_thread_fence(acquire);
-            const auto bottom = bottom_.load(acquire);
+            std::atomic_thread_fence(seq_cst);
+            auto bottom = bottom_.load(acquire);
+            std::optional<T> item;
 
             if (top < bottom) {
                 // non-empty queue
-                auto buffer = buffer_.load(acquire);
-                auto temp = buffer->load(top, acquire);
+                auto* buffer = buffer_.load(consume);
+                item = buffer->load(top);
+
                 if (!top_.compare_exchange_strong(top, top + 1, seq_cst, relaxed)) {
                     // failed the race
-                    return std::nullopt;
+                    item = std::nullopt;
                 }
-                return temp;
-            } else {
-                // deque is empty
-                return std::nullopt;
             }
+            // empty queue
+            return item;
         }
     };
 }  // namespace dp
