@@ -22,7 +22,7 @@ namespace dp {
     namespace details {
 
         // TODO: use move only function, work stealing deque can't use move only types
-#if 0  // __cpp_lib_move_only_function
+#if __cpp_lib_move_only_function
         using default_function_type = std::move_only_function<void()>;
 #else
         using default_function_type = std::function<void()>;
@@ -61,7 +61,7 @@ namespace dp {
 
                             do {
                                 // invoke the task
-                                while (auto task = tasks_[id].tasks.pop_front()) {
+                                while (auto task = tasks_[id].tasks.pop_top()) {
                                     // decrement the unassigned tasks as the task is now going
                                     // to be executed
                                     unassigned_tasks_.fetch_sub(1, std::memory_order_release);
@@ -76,7 +76,7 @@ namespace dp {
                                 // try to steal a task
                                 for (std::size_t j = 1; j < tasks_.size(); ++j) {
                                     const std::size_t index = (id + j) % tasks_.size();
-                                    if (auto task = tasks_[index].tasks.steal()) {
+                                    if (auto task = tasks_[index].tasks.pop_top()) {
                                         // steal a task
                                         unassigned_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
@@ -144,7 +144,7 @@ namespace dp {
             requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
 #if 0  // __cpp_lib_move_only_function
-          // we can do this in C++23 because we now have support for move only functions
+       // we can do this in C++23 because we now have support for move only functions
             std::promise<ReturnType> promise;
             auto future = promise.get_future();
             auto task = [func = std::move(f), ... largs = std::move(args),
@@ -264,7 +264,7 @@ namespace dp {
             }
 
             // assign work
-            tasks_[i].tasks.push_back(std::forward<Function>(f));
+            tasks_[i].tasks.push_bottom(std::forward<Function>(f));
             tasks_[i].signal.release();
         }
 
