@@ -44,6 +44,14 @@ namespace dp {
             return data_.empty();
         }
 
+        size_type clear() {
+            std::scoped_lock lock(mutex_);
+            auto size = data_.size();
+            data_.clear();
+
+            return size;
+        }
+
         [[nodiscard]] std::optional<T> pop_front() {
             std::scoped_lock lock(mutex_);
             if (data_.empty()) return std::nullopt;

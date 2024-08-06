@@ -241,6 +241,20 @@ namespace dp {
             }
         }
 
+        /**
+         * @brief Makes best-case attempt to clear all tasks from the thread_pool
+         * @details Note that this does not guarantee that all tasks will be cleared, as currently
+         * running tasks could add additional tasks. Also a thread could steal a task from another
+         * in the middle of this.
+         */
+        void clear_tasks() {
+            size_t removed_task_count = 0;
+            for (auto &task_list : tasks_)
+                removed_task_count += task_list.tasks.clear();
+            in_flight_tasks_.fetch_sub(removed_task_count, std::memory_order_release);
+            unassigned_tasks_.fetch_sub(removed_task_count, std::memory_order_release);
+        }
+
       private:
         template <typename Function>
         void enqueue_task(Function &&f) {
