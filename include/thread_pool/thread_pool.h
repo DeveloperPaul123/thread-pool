@@ -250,7 +250,9 @@ namespace dp {
          */
         size_t clear_tasks() {
             size_t removed_task_count{0};
-            for (auto &task_list : tasks_) removed_task_count += task_list.tasks.clear();
+            for (auto &task_list : tasks_) {
+                removed_task_count += task_list.tasks.clear();
+            }
             in_flight_tasks_.fetch_sub(removed_task_count, std::memory_order_release);
             unassigned_tasks_.fetch_sub(removed_task_count, std::memory_order_release);
 
