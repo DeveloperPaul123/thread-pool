@@ -51,3 +51,38 @@ TEST_CASE("Ensure insert and pop works with thread contention") {
     CHECK_NE(res2, res3);
     CHECK_NE(res3, res1);
 }
+
+TEST_CASE("Ensure clear() works and returns correct count") {
+    // create a synchronization barrier to ensure our threads have started before executing code to
+    // clear the queue
+
+    // here, we check that:
+    // - the queue is cleared
+    // - that clear() return the correct number
+
+    std::barrier barrier(3);
+    std::atomic<size_t> removed_count{0};
+
+    dp::thread_safe_queue<int> queue;
+    {
+        std::jthread t1([&queue, &barrier, &removed_count] {
+            queue.push_front(1);
+            barrier.arrive_and_wait();
+            removed_count = queue.clear();
+            barrier.arrive_and_wait();
+        });
+        std::jthread t2([&queue, &barrier] {
+            queue.push_front(2);
+            barrier.arrive_and_wait();
+            barrier.arrive_and_wait();
+        });
+        std::jthread t3([&queue, &barrier] {
+            queue.push_front(3);
+            barrier.arrive_and_wait();
+            barrier.arrive_and_wait();
+        });
+    }
+
+    CHECK(queue.empty());
+    CHECK_EQ(removed_count, 3);
+}
