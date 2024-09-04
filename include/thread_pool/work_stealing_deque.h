@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <bit>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -43,14 +44,14 @@ namespace dp {
          * @brief Simple circular array buffer that can regrow
          */
         class circular_buffer final {
-            std::int64_t size_;
-            std::int64_t mask_;
+            std::size_t size_;
+            std::size_t mask_;
             std::unique_ptr<T[]> buffer_ = std::make_unique_for_overwrite<T[]>(size_);
 
           public:
-            explicit circular_buffer(const std::int64_t size) : size_(size), mask_(size - 1) {
+            explicit circular_buffer(const std::size_t size) : size_(size), mask_(size - 1) {
                 // size must be a power of 2
-                assert((size % 2) == 0);
+                assert(std::has_single_bit(size));
             }
 
             [[nodiscard]] std::int64_t capacity() const noexcept { return size_; }
