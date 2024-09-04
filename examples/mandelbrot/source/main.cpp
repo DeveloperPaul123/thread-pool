@@ -20,7 +20,7 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
 
     std::cout << "calculating mandelbrot" << std::endl;
 
-    dp::thread_pool pool;
+    dp::thread_pool pool{};
     std::vector<std::future<std::vector<rgb>>> futures;
     futures.reserve(source.height());
     const auto start = std::chrono::steady_clock::now();
