@@ -64,7 +64,7 @@ endif()
 if(NOT TEST_INSTALLED_VERSION)
     target_compile_options(
         ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,Clang,GNU>:-Wall -Wpedantic -Wextra
-                             -Werror>
+                             -Werror -Wno-deprecated>
     )
     target_compile_options(${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /WX /wd4324>)
     target_compile_definitions(
