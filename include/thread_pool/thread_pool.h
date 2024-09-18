@@ -88,9 +88,9 @@ namespace dp {
                             } while (unassigned_tasks_.load(std::memory_order_acquire) > 0);
 
                             priority_queue_.rotate_to_front(id);
-                            // check if all tasks are completed and release the barrier (binary
-                            // semaphore)
+                            // check if all tasks are completed and release the "barrier"
                             if (in_flight_tasks_.load(std::memory_order_acquire) == 0) {
+                                // in theory, only one thread will set this
                                 threads_complete_signal_.store(true, std::memory_order_release);
                                 threads_complete_signal_.notify_one();
                             }
