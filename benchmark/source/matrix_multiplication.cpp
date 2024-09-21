@@ -97,11 +97,12 @@ TEST_CASE("matrix_multiplication") {
         }
 #endif
         {
-            dp::thread_pool<fu2::unique_function<void()>> pool{};
+            dp::thread_pool<fu2::unique_function<void() &&>> pool{};
             run_benchmark<int>(&bench, array_size, iterations,
                                "dp::thread_pool - fu2::unique_function",
-                               [&](const std::vector<int>& a, const std::vector<int>& b) -> void {
-                                   pool.enqueue_detach(thread_task, a, b);
+                               [&pool, task = thread_task](const std::vector<int>& a,
+                                                           const std::vector<int>& b) -> void {
+                                   pool.enqueue_detach(std::move(task), a, b);
                                });
         }
 
