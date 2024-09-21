@@ -57,13 +57,14 @@ namespace dp {
             [[nodiscard]] std::int64_t capacity() const noexcept { return size_; }
 
             void store(const std::size_t index, T&& value) noexcept
-                requires std::is_move_assignable_v<T>
+                requires std::is_nothrow_move_assignable_v<T>
             {
                 buffer_[index & mask_] = std::move(value);
             }
 
             T&& load(const std::size_t index) noexcept {
-                if constexpr (std::is_move_constructible_v<T>) {
+                if constexpr (std::is_move_constructible_v<T> ||
+                              std::is_nothrow_move_constructible_v<T>) {
                     return std::move(buffer_[index & mask_]);
                 } else {
                     return buffer_[index & mask_];
@@ -121,13 +122,18 @@ namespace dp {
             push_bottom(std::move(value));
         }
 
+        /**
+         * @brief Push data to the bottom of the queue.
+         * @details Only the producer thread can push data to the bottom. Consumers should take data
+         * from the top. See #pop_top.
+         */
         void push_bottom(T&& value) {
             auto bottom = bottom_.load(relaxed);
             auto top = top_.load(acquire);
             auto* buffer = buffer_.load(relaxed);
 
             // check if the buffer is full
-            if (buffer->capacity() - 1 < (bottom - top)) {
+            if (buffer->capacity() < (bottom - top) + 1) {
                 garbage_.emplace_back(std::exchange(buffer, buffer->resize(top, bottom)));
                 buffer_.store(buffer, relaxed);
             }
@@ -141,41 +147,6 @@ namespace dp {
             bottom_.store(bottom + 1, relaxed);
         }
 
-        std::optional<T> take_bottom() {
-            auto bottom = bottom_.load(relaxed) - 1;
-            auto* buffer = buffer_.load(relaxed);
-
-            // prevent stealing
-            bottom_.store(bottom, relaxed);
-
-            // this synchronizes with other release fences
-            // memory ops below this line cannot be reordered
-            std::atomic_thread_fence(seq_cst);
-
-            std::optional<T> item = std::nullopt;
-
-            auto top = top_.load(relaxed);
-            if (top <= bottom) {
-                // queue isn't empty
-                item = buffer->load(bottom);
-                if (top == bottom) {
-                    // there is only 1 item left in the queue, we need the CAS to succeed
-                    // since another thread may be trying to steal and could steal before we're able
-                    // to take the bottom
-                    if (!top_.compare_exchange_strong(top, top + 1, seq_cst, relaxed)) {
-                        // failed race
-                        bottom_.store(bottom + 1, relaxed);
-                        item = std::nullopt;
-                    }
-                    bottom_.store(bottom + 1, relaxed);
-                }
-            } else {
-                bottom_.store(bottom + 1, relaxed);
-            }
-
-            return item;
-        }
-
         /**
          * @brief Steal from the top of the queue
          *
@@ -187,20 +158,52 @@ namespace dp {
             // memory ops below this line cannot be reordered with ops above this line
             std::atomic_thread_fence(seq_cst);
             auto bottom = bottom_.load(acquire);
-            std::optional<T> item;
 
             if (top < bottom) {
                 // non-empty queue
-                auto* buffer = buffer_.load(consume);
-                item = buffer->load(top);
+                auto item = buffer_.load(consume)->load(top);
 
                 if (!top_.compare_exchange_strong(top, top + 1, seq_cst, relaxed)) {
                     // failed the race
-                    item = std::nullopt;
+                    return std::nullopt;
                 }
+
+                return item;
             }
             // empty queue
-            return item;
+            return std::nullopt;
+        }
+
+        std::optional<T> take_bottom() {
+            auto bottom = bottom_.load(relaxed) - 1;
+            auto* buffer = buffer_.load(relaxed);
+
+            // prevent stealing
+            bottom_.store(bottom, relaxed);
+
+            // this synchronizes with other release fences
+            // memory ops below this line cannot be reordered
+            std::atomic_thread_fence(seq_cst);
+
+            auto top = top_.load(relaxed);
+            if (top <= bottom) {
+                // queue isn't empty
+                if (top == bottom) {
+                    // there is only 1 item left in the queue, we need the CAS to succeed
+                    // since another thread may be trying to steal and could steal before we're able
+                    // to take the bottom
+                    if (!top_.compare_exchange_strong(top, top + 1, seq_cst, relaxed)) {
+                        // failed race
+                        bottom_.store(bottom + 1, relaxed);
+                        return std::nullopt;
+                    }
+                    bottom_.store(bottom + 1, relaxed);
+                }
+                return buffer->load(bottom);
+            } else {
+                bottom_.store(bottom + 1, relaxed);
+                return std::nullopt;
+            }
         }
     };
 }  // namespace dp
