@@ -9,6 +9,7 @@
 #include <semaphore>
 #include <thread>
 #include <type_traits>
+#include <unordered_map>
 #ifdef __has_include
 #    if __has_include(<version>)
 #        include <version>
@@ -20,8 +21,6 @@
 
 namespace dp {
     namespace details {
-
-        // TODO: use move only function, work stealing deque can't use move only types
 #if __cpp_lib_move_only_function
         using default_function_type = std::move_only_function<void()>;
 #else
@@ -42,12 +41,16 @@ namespace dp {
             const unsigned int &number_of_threads = std::thread::hardware_concurrency(),
             InitializationFunction init = [](std::size_t) {})
             : tasks_(number_of_threads) {
+            producer_id_ = std::this_thread::get_id();
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 priority_queue_.push_back(size_t(current_id));
                 try {
                     threads_.emplace_back([&, id = current_id,
                                            init](const std::stop_token &stop_tok) {
+                        tasks_[id].thread_id = std::this_thread::get_id();
+                        add_thread_id_to_map(tasks_[id].thread_id, id);
+
                         // invoke the init function on the thread
                         try {
                             std::invoke(init, id);
@@ -60,7 +63,16 @@ namespace dp {
                             tasks_[id].signal.acquire();
 
                             do {
-                                // invoke the task
+                                // execute work from the global queue
+                                // all threads can pull from the top, but the producer thread owns
+                                // the bottom
+                                while (auto task = global_tasks_.pop_top()) {
+                                    unassigned_tasks_.fetch_sub(1, std::memory_order_release);
+                                    std::invoke(std::move(task.value()));
+                                    in_flight_tasks_.fetch_sub(1, std::memory_order_release);
+                                }
+
+                                // invoke any tasks from the queue that this thread owns
                                 while (auto task = tasks_[id].tasks.pop_top()) {
                                     // decrement the unassigned tasks as the task is now going
                                     // to be executed
@@ -73,7 +85,7 @@ namespace dp {
                                     in_flight_tasks_.fetch_sub(1, std::memory_order_release);
                                 }
 
-                                // try to steal a task
+                                // try to steal a task from other threads
                                 for (std::size_t j = 1; j < tasks_.size(); ++j) {
                                     const std::size_t index = (id + j) % tasks_.size();
                                     if (auto task = tasks_[index].tasks.pop_top()) {
@@ -89,6 +101,8 @@ namespace dp {
                                 // front and waiting for more work
                             } while (unassigned_tasks_.load(std::memory_order_acquire) > 0);
 
+                            // the thread finished all its work, so we "notify" by putting this
+                            // thread in front in the priority queue
                             priority_queue_.rotate_to_front(id);
                             // check if all tasks are completed and release the barrier (binary
                             // semaphore)
@@ -143,8 +157,8 @@ namespace dp {
                   typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
             requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
-#if 0  // __cpp_lib_move_only_function
-       // we can do this in C++23 because we now have support for move only functions
+#if __cpp_lib_move_only_function
+            // we can do this in C++23 because we now have support for move only functions
             std::promise<ReturnType> promise;
             auto future = promise.get_future();
             auto task = [func = std::move(f), ... largs = std::move(args),
@@ -246,13 +260,45 @@ namespace dp {
       private:
         template <typename Function>
         void enqueue_task(Function &&f) {
-            auto i_opt = priority_queue_.copy_front_and_rotate_to_back();
-            if (!i_opt.has_value()) {
-                // would only be a problem if there are zero threads
-                return;
+            // are we enquing from the producer thread? Or is a worker thread
+            // enquing to the pool?
+            auto current_id = std::this_thread::get_id();
+            auto is_producer = current_id == producer_id_;
+            // assign the work
+            if (is_producer) {
+                // we push to the global task queue
+                global_tasks_.emplace(std::forward<Function>(f));
+            } else {
+                // This is a violation of the pre-condition.
+                // We cannot accept work from an arbitrary thread that is not the root producer or a
+                // worker in the pool
+                assert(thread_id_to_index_.contains(current_id));
+                // assign the task
+                tasks_[thread_id_to_index_.at(current_id)].tasks.emplace(
+                    std::forward<Function>(f));
             }
-            // get the index
-            auto i = *(i_opt);
+
+            /**
+             * Now we need to wake up the correct thread. If the thread that is enqueuing the task
+             * is a worker from the pool, then that thread needs to execute the work. Otherwise we
+             * need to use the priority queue to use the next available thread.
+             */
+
+            // immediately invoked lambda
+            auto thread_wakeup_index = [&]() -> std::size_t {
+                if (is_producer) {
+                    auto i_opt = priority_queue_.copy_front_and_rotate_to_back();
+                    if (!i_opt.has_value()) {
+                        // would only be a problem if there are zero threads
+                        return std::size_t{0};
+                    }
+                    // get the index
+                    return *(i_opt);
+                } else {
+                    // get the worker thread id index
+                    return thread_id_to_index_.at(current_id);
+                }
+            }();
 
             // increment the unassigned tasks and in flight tasks
             unassigned_tasks_.fetch_add(1, std::memory_order_release);
@@ -264,13 +310,18 @@ namespace dp {
             }
 
             // assign work
-            tasks_[i].tasks.push_bottom(std::forward<Function>(f));
-            tasks_[i].signal.release();
+            tasks_[thread_wakeup_index].signal.release();
+        }
+
+        void add_thread_id_to_map(std::thread::id thread_id, std::size_t index) {
+            std::lock_guard lock(thread_id_map_mutex_);
+            thread_id_to_index_.insert_or_assign(thread_id, index);
         }
 
         struct task_item {
             dp::work_stealing_deque<FunctionType> tasks{};
             std::binary_semaphore signal{0};
+            std::thread::id thread_id;
         };
 
         std::vector<ThreadType> threads_;
@@ -279,6 +330,11 @@ namespace dp {
         // guarantee these get zero-initialized
         std::atomic_int_fast64_t unassigned_tasks_{0}, in_flight_tasks_{0};
         std::atomic_bool threads_complete_signal_{false};
+
+        std::thread::id producer_id_;
+        dp::work_stealing_deque<FunctionType> global_tasks_{};
+        std::mutex thread_id_map_mutex_{};
+        std::unordered_map<std::thread::id, std::size_t> thread_id_to_index_{};
     };
 
     /**
