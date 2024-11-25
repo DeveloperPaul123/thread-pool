@@ -98,7 +98,7 @@ namespace dp {
             std::optional<T> front = data_.front();
             data_.pop_front();
 
-            data_.push_back(front);
+            data_.push_back(*front);
 
             return front;
         }
