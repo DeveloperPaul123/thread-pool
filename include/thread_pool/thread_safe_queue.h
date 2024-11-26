@@ -56,7 +56,7 @@ namespace dp {
             std::scoped_lock lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
-            auto front = std::move(data_.front());
+            std::optional<T> front = std::move(data_.front());
             data_.pop_front();
             return front;
         }
@@ -65,7 +65,7 @@ namespace dp {
             std::scoped_lock lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
-            auto back = std::move(data_.back());
+            std::optional<T> back = std::move(data_.back());
             data_.pop_back();
             return back;
         }
@@ -74,7 +74,7 @@ namespace dp {
             std::scoped_lock lock(mutex_);
             if (data_.empty()) return std::nullopt;
 
-            auto back = std::move(data_.back());
+            std::optional<T> back = std::move(data_.back());
             data_.pop_back();
             return back;
         }
@@ -95,10 +95,10 @@ namespace dp {
 
             if (data_.empty()) return std::nullopt;
 
-            auto front = data_.front();
+            std::optional<T> front = data_.front();
             data_.pop_front();
 
-            data_.push_back(front);
+            data_.push_back(*front);
 
             return front;
         }
