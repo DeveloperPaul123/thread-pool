@@ -235,7 +235,8 @@ namespace dp {
          * @details This function will block until all tasks have been completed.
          */
         void wait_for_tasks() {
-            if (in_flight_tasks_.load(std::memory_order_acquire) > 0) {
+            // must be a while loop to ignore spurious wake-ups
+            while (in_flight_tasks_.load(std::memory_order_acquire) > 0) {
                 // wait for all tasks to finish
                 threads_complete_signal_.wait(false);
             }
