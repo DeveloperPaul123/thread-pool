@@ -15,7 +15,7 @@ CPMAddPackage(
     GIT_SHALLOW
 )
 
-CPMAddPackage("gh:doctest/doctest@2.4.11")
+CPMAddPackage("gh:doctest/doctest@2.4.12")
 CPMAddPackage(
     NAME bshoshany
     GITHUB_REPOSITORY bshoshany/thread-pool
