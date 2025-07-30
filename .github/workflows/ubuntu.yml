@@ -22,7 +22,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-            os: [ubuntu-20.04, ubuntu-latest]
+            os: [ubuntu-22.04, ubuntu-latest]
             version: [11]
             include:
               - os: ubuntu-latest
@@ -72,14 +72,14 @@ jobs:
 
   build-clang:
     name: "clang-${{matrix.version}}"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CPP_STANDARD: 20
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
-        version: [14, 15, 16, 17, 18]
+        version: [14, 15, 16, 17, 18, 19]
          
     steps:
       - uses: actions/checkout@v3
