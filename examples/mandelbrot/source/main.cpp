@@ -83,7 +83,7 @@ auto main(int argc, char **argv) -> int {
 
         mandelbrot_threadpool(image_size, image_size, max_iterations, output_file_name);
 
-    } catch (const cxxopts::OptionException &e) {
+    } catch (const cxxopts::exceptions::exception &e) {
         std::cout << "error parsing options: " << e.what() << std::endl;
         exit(1);
     }

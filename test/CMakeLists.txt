@@ -13,10 +13,10 @@ include(../cmake/tools.cmake)
 
 include(../cmake/CPM.cmake)
 
-CPMAddPackage("gh:doctest/doctest@2.4.11")
+CPMAddPackage("gh:doctest/doctest@2.4.12")
 CPMAddPackage(
   NAME Format.cmake
-  VERSION 1.7.3
+  VERSION 1.8.3
   GITHUB_REPOSITORY TheLartians/Format.cmake
   OPTIONS 
       # skip CMake formatting for now

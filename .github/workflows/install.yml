@@ -3,10 +3,10 @@ name: Install
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     env:
       CPP_STANDARD: 20
@@ -32,7 +32,7 @@ jobs:
         with:
           version: 11
           platform: x64
-          
+
       - name: build and install library
         run: |
           cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_TESTS=ON -DTP_BUILD_BENCHMARKS=OFF -DCMAKE_INSTALL_PREFIX="/usr/local"
