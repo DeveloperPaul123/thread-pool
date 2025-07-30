@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <barrier>
+#include <chrono>
 #include <iostream>
 #include <numeric>
 #include <random>
