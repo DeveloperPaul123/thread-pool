@@ -15,7 +15,7 @@
 #    endif
 #endif
 
-#include "thread_pool/thread_safe_queue.h"
+#include "thread_safe_queue.h"
 
 namespace dp {
     namespace details {
