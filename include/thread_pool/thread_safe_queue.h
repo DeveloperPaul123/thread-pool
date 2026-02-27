@@ -5,6 +5,7 @@
 #include <deque>
 #include <mutex>
 #include <optional>
+#include <tuple> // std::ignore
 
 namespace dp {
     /**

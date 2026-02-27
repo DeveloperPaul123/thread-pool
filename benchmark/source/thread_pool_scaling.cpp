@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <riften/thiefpool.hpp>
+#include <string>
 #include <thread>
 
 inline void thread_task() {
