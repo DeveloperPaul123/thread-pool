@@ -41,7 +41,7 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
     colors.reserve(source.size());
 
     // copy data to output vector
-    for (auto &future : futures) {
+    for (auto& future : futures) {
         auto data = future.get();
         colors.insert(colors.end(), data.begin(), data.end());
     }
@@ -56,7 +56,7 @@ void mandelbrot_threadpool(int image_width, int image_height, int max_iterations
     save_ppm(source.width(), source.height(), colors, output_file_name);
 }
 
-auto main(int argc, char **argv) -> int {
+auto main(int argc, char** argv) -> int {
     cxxopts::Options options(*argv, "Generate a mandelbrot ppm image using a thread pool!");
 
     int image_size;
@@ -83,7 +83,7 @@ auto main(int argc, char **argv) -> int {
 
         mandelbrot_threadpool(image_size, image_size, max_iterations, output_file_name);
 
-    } catch (const cxxopts::exceptions::exception &e) {
+    } catch (const cxxopts::exceptions::exception& e) {
         std::cout << "error parsing options: " << e.what() << std::endl;
         exit(1);
     }

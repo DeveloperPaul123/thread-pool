@@ -1,0 +1,5 @@
+Diagnostics:
+   MissingIncludes: Strict
+   UnusedIncludes: Strict
+CompileFlags:
+  CompilationDatabase: ./out/build/x64-debug-clang

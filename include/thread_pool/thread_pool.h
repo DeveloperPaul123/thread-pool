@@ -2,13 +2,15 @@
 
 #include <atomic>
 #include <concepts>
+#include <cstddef>
 #include <deque>
 #include <functional>
 #include <future>
-#include <memory>
 #include <semaphore>
 #include <thread>
+#include <tuple>  // std::ignore
 #include <type_traits>
+
 #ifdef __has_include
 #    if __has_include(<version>)
 #        include <version>
@@ -37,7 +39,7 @@ namespace dp {
             requires std::invocable<InitializationFunction, std::size_t> &&
                      std::is_same_v<void, std::invoke_result_t<InitializationFunction, std::size_t>>
         explicit thread_pool(
-            const unsigned int &number_of_threads = std::thread::hardware_concurrency(),
+            const unsigned int& number_of_threads = std::thread::hardware_concurrency(),
             InitializationFunction init = [](std::size_t) {})
             : tasks_(number_of_threads) {
             std::size_t current_id = 0;
@@ -45,7 +47,7 @@ namespace dp {
                 priority_queue_.push_back(size_t(current_id));
                 try {
                     threads_.emplace_back([&, id = current_id,
-                                           init](const std::stop_token &stop_tok) {
+                                           init](const std::stop_token& stop_tok) {
                         // invoke the init function on the thread
                         try {
                             std::invoke(init, id);
@@ -124,8 +126,8 @@ namespace dp {
         }
 
         /// thread pool is non-copyable
-        thread_pool(const thread_pool &) = delete;
-        thread_pool &operator=(const thread_pool &) = delete;
+        thread_pool(const thread_pool&) = delete;
+        thread_pool& operator=(const thread_pool&) = delete;
 
         /**
          * @brief Enqueue a task into the thread pool that returns a result.
@@ -138,7 +140,7 @@ namespace dp {
          * @return A std::future<ReturnType> that can be used to retrieve the returned value.
          */
         template <typename Function, typename... Args,
-                  typename ReturnType = std::invoke_result_t<Function &&, Args &&...>>
+                  typename ReturnType = std::invoke_result_t<Function&&, Args&&...>>
             requires std::invocable<Function, Args...>
         [[nodiscard]] std::future<ReturnType> enqueue(Function f, Args... args) {
 #ifdef __cpp_lib_move_only_function
@@ -205,22 +207,22 @@ namespace dp {
          */
         template <typename Function, typename... Args>
             requires std::invocable<Function, Args...>
-        void enqueue_detach(Function &&func, Args &&...args) {
-            enqueue_task(std::move([f = std::forward<Function>(func),
-                                    ... largs =
-                                        std::forward<Args>(args)]() mutable -> decltype(auto) {
-                // suppress exceptions
-                try {
-                    if constexpr (std::is_same_v<void,
-                                                 std::invoke_result_t<Function &&, Args &&...>>) {
-                        std::invoke(f, largs...);
-                    } else {
-                        // the function returns an argument, but can be ignored
-                        std::ignore = std::invoke(f, largs...);
+        void enqueue_detach(Function&& func, Args&&... args) {
+            enqueue_task(
+                std::move([f = std::forward<Function>(func),
+                           ... largs = std::forward<Args>(args)]() mutable -> decltype(auto) {
+                    // suppress exceptions
+                    try {
+                        if constexpr (std::is_same_v<void,
+                                                     std::invoke_result_t<Function&&, Args&&...>>) {
+                            std::invoke(f, largs...);
+                        } else {
+                            // the function returns an argument, but can be ignored
+                            std::ignore = std::invoke(f, largs...);
+                        }
+                    } catch (...) {
                     }
-                } catch (...) {
-                }
-            }));
+                }));
         }
 
         /**
@@ -251,7 +253,7 @@ namespace dp {
          */
         size_t clear_tasks() {
             size_t removed_task_count{0};
-            for (auto &task_list : tasks_) {
+            for (auto& task_list : tasks_) {
                 removed_task_count += task_list.tasks.clear();
             }
             in_flight_tasks_.fetch_sub(removed_task_count, std::memory_order_release);
@@ -262,7 +264,7 @@ namespace dp {
 
       private:
         template <typename Function>
-        void enqueue_task(Function &&f) {
+        void enqueue_task(Function&& f) {
             auto i_opt = priority_queue_.copy_front_and_rotate_to_back();
             if (!i_opt.has_value()) {
                 // would only be a problem if there are zero threads
