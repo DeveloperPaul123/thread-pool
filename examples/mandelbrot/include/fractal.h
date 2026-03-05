@@ -33,7 +33,7 @@ struct fractal_window {
 /// @brief Performs smooth polynomial fitting to the given value.
 rgb get_rgb_smooth(int n, int iter_max);
 
-void save_ppm(const unsigned int &width, const unsigned int &height, std::span<rgb> colors,
+void save_ppm(const unsigned int& width, const unsigned int& height, std::span<rgb> colors,
               std::string_view file_name);
 /**
  * @brief Convert a pixel coordinate to the complex domain
@@ -41,7 +41,7 @@ void save_ppm(const unsigned int &width, const unsigned int &height, std::span<r
  * @param fr Fractal domain (real and imaginary range)
  * @param c Initial complex value
  */
-complex scale(const fractal_window<int> &scr, const fractal_window<double> &fr, complex c);
+complex scale(const fractal_window<int>& scr, const fractal_window<double>& fr, complex c);
 
 /**
  * @brief Check if a point is in the set or escapes to infinity, return the number if iterations
@@ -49,7 +49,7 @@ complex scale(const fractal_window<int> &scr, const fractal_window<double> &fr, 
  * @param iter_max Max number of iterations
  * @param func The complex function used for the fractal.
  */
-int escape(complex c, int iter_max, const std::function<complex(complex, complex)> &func);
+int escape(complex c, int iter_max, const std::function<complex(complex, complex)>& func);
 
 /**
  * @brief Calculate a single fractal row and returns it's color values.
