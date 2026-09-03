@@ -16,6 +16,10 @@
 
 auto multiply(int a, int b) { return a * b; }
 
+TEST_CASE("Constructing a pool with zero threads throws") {
+    CHECK_THROWS_AS(dp::thread_pool<>(0), std::invalid_argument);
+}
+
 TEST_CASE("A pool with one thread runs many more tasks than it has threads") {
     // Regression guard for the binary_semaphore over-release: enqueue_task() releases the
     // per-worker signal once per task, so a busy worker accumulates far more than one permit.
@@ -631,7 +635,6 @@ TEST_CASE("Check clear_tasks() clears tasks") {
     size_t cleared_tasks{0};
     std::atomic<unsigned int> counter{0};
 
-    SUBCASE("with no thread") { thread_count = 0; }
     SUBCASE("with single thread") { thread_count = 1; }
     SUBCASE("with multiple threads") { thread_count = 4; }
 

@@ -7,6 +7,7 @@
 #include <functional>
 #include <future>
 #include <semaphore>
+#include <stdexcept>
 #include <thread>
 #include <tuple>  // std::ignore
 #include <type_traits>
@@ -42,6 +43,13 @@ namespace dp {
             const unsigned int& number_of_threads = std::thread::hardware_concurrency(),
             InitializationFunction init = [](std::size_t) {})
             : tasks_(number_of_threads) {
+            // A pool with no workers can never run anything, and enqueue() would hand back a
+            // future whose promise is silently dropped (std::future_error: Broken promise).
+            // Note std::thread::hardware_concurrency() is permitted to return 0, so this also
+            // catches the defaulted case on an unusual platform.
+            if (number_of_threads == 0) {
+                throw std::invalid_argument("dp::thread_pool requires at least one thread");
+            }
             std::size_t current_id = 0;
             for (std::size_t i = 0; i < number_of_threads; ++i) {
                 priority_queue_.push_back(size_t(current_id));
@@ -115,6 +123,12 @@ namespace dp {
                     // remove our thread from the priority queue
                     std::ignore = priority_queue_.pop_back();
                 }
+            }
+
+            // emplace_back() above can also fail for every thread even when number_of_threads != 0.
+            if (threads_.empty()) {
+                throw std::runtime_error(
+                    "dp::thread_pool: failed to start any worker threads");
             }
         }
 
