@@ -14,15 +14,12 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-
-    env:
-      CPP_STANDARD: 20
+    runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: "**/cpm_modules"
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
@@ -30,7 +27,7 @@ jobs:
       - name: set up GCC
         uses: egor-tensin/setup-gcc@v1
         with:
-          version: 11
+          version: 13
           platform: x64
 
       - name: build and install library
@@ -40,7 +37,7 @@ jobs:
           rm -rf build
 
       - name: configure
-        run: cmake -Stest -Bbuild -DTEST_INSTALLED_VERSION=1 -Dthread-pool_DIR="/usr/local/lib/cmake/thread-pool-0.6.0/"
+        run: cmake -Stest -Bbuild -DTEST_INSTALLED_VERSION=1 -DCMAKE_PREFIX_PATH=/usr/local
 
       - name: build
         run: cmake --build build --config Debug -j4

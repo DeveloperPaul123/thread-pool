@@ -13,24 +13,18 @@ env:
   CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
 
 jobs:
-  
+
   build-gcc:
     name: "gcc-${{ matrix.version }}"
-    runs-on: ${{ matrix.os }}
-    env:
-      CPP_STANDARD: 20
+    runs-on: ubuntu-24.04
     strategy:
         fail-fast: false
         matrix:
-            os: [ubuntu-22.04, ubuntu-latest]
-            version: [11]
-            include:
-              - os: ubuntu-latest
-                version: 12
+            version: [13, 14]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: "**/cpm_modules"
         key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
@@ -48,58 +42,55 @@ jobs:
       run: cmake --build build -j4
 
     - name: test
-      run: |
-        cd build
-        ctest --build-config Debug
+      run: ctest --test-dir build --build-config Debug
 
-    - name: Set up coverage tools
-      run: |
-          sudo apt-get install lcov gcovr -y
-      if: matrix.version == 11 && matrix.os == 'ubuntu-20.04'
+  # GCC 16 is currently the only toolchain whose libstdc++ asserts counting_semaphore's
+  # release() precondition, so this is the job that catches a regression of the
+  # binary_semaphore over-release at runtime. libstdc++ turns _GLIBCXX_ASSERTIONS on
+  # automatically for unoptimized builds, which is why this is a Debug build.
+  build-gcc-assertions:
+    name: "gcc-16 Debug + libstdc++ assertions"
+    runs-on: ubuntu-24.04
+    container: gcc:16
+    steps:
+    - uses: actions/checkout@v4
 
-    - name: Generate coverage report
-      working-directory: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir
-      run: |
-        lcov --directory . --capture --gcov gcov-11 --output-file coverage.info
-        lcov --remove coverage.info '*/test/*' --output-file coverage.info
-      if: matrix.version == 11 && matrix.os == 'ubuntu-20.04'
-
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+    - uses: actions/cache@v4
       with:
-        files: ${{github.workspace}}/build/test/CMakeFiles/thread-pool-tests.dir/coverage.info
-      if: matrix.version == 11 && matrix.os == 'ubuntu-20.04'
+        path: "**/cpm_modules"
+        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+
+    - name: install cmake
+      run: |
+        apt-get update
+        apt-get install -y cmake ninja-build
+
+    - name: configure
+      run: cmake -S . -B build -G Ninja -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-D_GLIBCXX_ASSERTIONS"
+
+    - name: build
+      run: cmake --build build -j4
+
+    - name: test
+      run: ctest --test-dir build --build-config Debug
 
   build-clang:
     name: "clang-${{matrix.version}}"
-    runs-on: ubuntu-22.04
-    env:
-      CPP_STANDARD: 20
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
-        version: [14, 15, 16, 17, 18, 19]
-         
-    steps:
-      - uses: actions/checkout@v3
+        version: [18, 19, 20]
 
-      - uses: actions/cache@v3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
         with:
           path: "**/cpm_modules"
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-          
-      # clang needs GCC
-      - name: set up GCC
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: 11
-          platform: x64
-      - name: Install libs
-        run: |
-          sudo apt-get update
-          sudo apt-get install build-essential -y
-        
+
       - name: Set up Clang
         run: |
           wget -O llvm.sh https://apt.llvm.org/llvm.sh
@@ -111,11 +102,30 @@ jobs:
         env:
           CC: clang-${{matrix.version}}
           CXX: clang++-${{matrix.version}}
-      
+
       - name: build
         run: cmake --build build-clang -j4
 
       - name: test clang
-        run: |
-          cd build-clang
-          ctest --build-config Debug
+        run: ctest --test-dir build-clang --build-config Debug
+
+  # A thread pool with no sanitizer coverage in CI is how the semaphore bug survived to release.
+  build-tsan:
+    name: "ThreadSanitizer"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: "**/cpm_modules"
+          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+
+      - name: configure
+        run: cmake -S . -B build-tsan -DTP_BUILD_EXAMPLES=OFF -DTP_BUILD_BENCHMARKS=OFF -DTP_THREAD_SANITIZER=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: build
+        run: cmake --build build-tsan -j4
+
+      - name: test
+        run: ctest --test-dir build-tsan --build-config RelWithDebInfo

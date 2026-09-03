@@ -37,13 +37,17 @@ file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
 add_executable(${PROJECT_NAME} ${sources})
 target_link_libraries(${PROJECT_NAME} doctest::doctest dp::thread-pool)
 
-target_compile_options(
-    ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
-)
+# gcov's counters are incremented non-atomically, so instrumenting the ThreadSanitizer binary
+# with --coverage as well produces spurious data-race reports unrelated to the pool itself.
+if(NOT TP_THREAD_SANITIZER)
+    target_compile_options(
+        ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
+    )
 
-target_link_options(
-    ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
-)
+    target_link_options(
+        ${PROJECT_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:--coverage>
+    )
+endif()
 
 if(NOT WIN32 AND TP_THREAD_SANITIZER)
     message(STATUS "Setting thread sanitizer flags.")

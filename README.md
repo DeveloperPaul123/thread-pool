@@ -12,7 +12,6 @@ thread-pool
 [![Windows](https://github.com/ptsouchlos/thread-pool/actions/workflows/windows.yml/badge.svg)](https://github.com/ptsouchlos/thread-pool/actions/workflows/windows.yml)
 [![Style](https://github.com/ptsouchlos/thread-pool/actions/workflows/style.yml/badge.svg)](https://github.com/ptsouchlos/thread-pool/actions/workflows/style.yml)
 [![Install](https://github.com/ptsouchlos/thread-pool/actions/workflows/install.yml/badge.svg)](https://github.com/ptsouchlos/thread-pool/actions/workflows/install.yml)
-[![codecov](https://codecov.io/github/ptsouchlos/thread-pool/branch/feature/codecov/graph/badge.svg?token=Y47HDBRVR3)](https://codecov.io/github/ptsouchlos/thread-pool)
 
 A simple, *fast* and functional thread pool implementation using pure C++20.
 
