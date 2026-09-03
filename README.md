@@ -43,7 +43,8 @@ vcpkg install dp-thread-pool
 You can then use `find_package()`:
 
 ```cmake
-find_package(dp::thread-pool REQUIRED)
+find_package(thread-pool REQUIRED)
+target_link_libraries(your_target PRIVATE dp::thread-pool)
 ```
 
 Alternatively, you can use something like [CPM](https://github.com/TheLartians/CPM) which is based on CMake's `Fetch_Content` module.
@@ -52,7 +53,7 @@ Alternatively, you can use something like [CPM](https://github.com/TheLartians/C
 CPMAddPackage(
   NAME thread-pool
   GITHUB_REPOSITORY ptsouchlos/thread-pool
-  GIT_TAG 0.6.0 # change this to latest commit or release tag
+  GIT_TAG 0.7.0 # change this to latest commit or release tag
   OPTIONS
     "TP_BUILD_TESTS OFF"
     "TP_BUILD_BENCHMARKS OFF"
@@ -157,7 +158,7 @@ This project has been built with:
 * Visual Studio 2022
 * Clang `10.+` (via WSL on Windows)
 * GCC `11.+` (vis WSL on Windows)
-* CMake `3.19+`
+* CMake `3.25+`
 
 To build, run:
 
@@ -168,10 +169,18 @@ cmake --build build
 
 ### Build Options
 
-| Option              | Description                                                         | Default |
-|:--------------------|:--------------------------------------------------------------------|:-------:|
-| `TP_BUILD_TESTS`    | Turn on to build unit tests. Required for formatting build targets. |   ON    |
-| `TP_BUILD_EXAMPLES` | Turn on to build examples                                           |   ON    |
+| Option                 | Description                                                          | Default              |
+|:-----------------------|:---------------------------------------------------------------------|:---------------------|
+| `TP_BUILD_TESTS`       | Turn on to build unit tests. Required for formatting build targets.  | ON if top-level      |
+| `TP_BUILD_EXAMPLES`    | Turn on to build examples.                                           | ON if top-level      |
+| `TP_BUILD_BENCHMARKS`  | Turn on to build benchmarks.                                         | ON if top-level      |
+| `TP_INSTALL`           | Generate `install()` rules for the library.                          | ON if top-level      |
+| `TP_THREAD_SANITIZER`  | Build the test target with ThreadSanitizer.                          | OFF                  |
+| `TP_CXX_STANDARD`      | Override the detected C++ standard (`DETECT`, `20`, or `23`).        | `DETECT`             |
+
+"ON if top-level" means the option defaults to `ON` when thread-pool is the top-level CMake project
+and `OFF` when it is consumed via `add_subdirectory()`/CPM, so embedding the library does not build
+its tests or install its headers into your project.
 
 ### Run clang-format
 
