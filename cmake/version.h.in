@@ -1,8 +1,13 @@
 #pragma once
 
+// clang-format off
 #define THREADPOOL_VERSION "@PROJECT_VERSION@"
 
 #define THREADPOOL_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
 #define THREADPOOL_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define THREADPOOL_VERSION_PATCH @PROJECT_VERSION_PATCH@
-#define THREADPOOL_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
+// PROJECT_VERSION_TWEAK is empty for a three-component version, which would expand to an
+// empty macro and break any consumer that uses it. @TP_VERSION_TWEAK@ is normalised to 0
+// in CMakeLists.txt.
+#define THREADPOOL_VERSION_TWEAK @TP_VERSION_TWEAK@
+// clang-format on

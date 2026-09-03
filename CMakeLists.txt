@@ -61,6 +61,16 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include
 
 find_package(Threads REQUIRED)
 
+# Included early: CMAKE_INSTALL_INCLUDEDIR is referenced by the INSTALL_INTERFACE generator
+# expression below, and GNUInstallDirs must run before it is read or it expands to nothing.
+include(GNUInstallDirs)
+
+option(TP_BUILD_TESTS "Turn on to build unit tests." ${PROJECT_IS_TOP_LEVEL})
+option(TP_BUILD_EXAMPLES "Turn on to build examples." ${PROJECT_IS_TOP_LEVEL})
+option(TP_BUILD_BENCHMARKS "Turn on to build benchmarks." ${PROJECT_IS_TOP_LEVEL})
+option(TP_THREAD_SANITIZER "Turn on to build with thread sanitizer." OFF)
+option(TP_INSTALL "Generate install rules for thread-pool." ${PROJECT_IS_TOP_LEVEL})
+
 # ---- Create library ----
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(dp::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
@@ -83,6 +93,14 @@ list(GET headers 0 first_header)
 get_filename_component(include_dir_path ${first_header} DIRECTORY)
 get_filename_component(include_dir_name ${include_dir_path} NAME)
 
+# PROJECT_VERSION_TWEAK is empty unless the version has four components; normalise it to 0 so
+# THREADPOOL_VERSION_TWEAK is never defined as an empty macro in the installed header.
+if(NOT PROJECT_VERSION_TWEAK)
+    set(TP_VERSION_TWEAK 0)
+else()
+    set(TP_VERSION_TWEAK ${PROJECT_VERSION_TWEAK})
+endif()
+
 configure_file(
     ${PROJECT_SOURCE_DIR}/cmake/version.h.in ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
     @ONLY
@@ -92,52 +110,45 @@ target_include_directories(
     ${PROJECT_NAME}
     INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
               $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-              $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# ---- Create an installable target ----
-# this allows users to install and find the library via `find_package()`.
+if(TP_INSTALL)
+    # ---- Create an installable target ----
+    # this allows users to install and find the library via `find_package()`.
+    include(CMakePackageConfigHelpers)
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
+    # Installation help
+    configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
+        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
 
-# Installation help
-configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
-)
+    write_basic_package_version_file(
+        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake" COMPATIBILITY SameMinorVersion
+                                                                                   ARCH_INDEPENDENT
+    )
 
-write_basic_package_version_file(
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake" COMPATIBILITY SameMajorVersion
-                                                                               ARCH_INDEPENDENT
-)
+    install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 
-install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+    install(
+        EXPORT ${PROJECT_NAME}-targets
+        NAMESPACE dp::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        FILE "${PROJECT_NAME}-targets.cmake"
+    )
 
-install(
-    EXPORT ${PROJECT_NAME}-targets
-    NAMESPACE dp::
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
-    FILE "${PROJECT_NAME}-targets.cmake"
-)
+    install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+                  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+    )
 
-install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-              "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
-)
-
-install(FILES ${headers}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool
-)
-install(FILES ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}-${PROJECT_VERSION}/thread_pool
-)
-
-option(TP_BUILD_TESTS "Turn on to build unit tests." ON)
-option(TP_BUILD_EXAMPLES "Turn on to build examples." ON)
-option(TP_BUILD_BENCHMARKS "Turn on to build benchmarks." ON)
-option(TP_THREAD_SANITIZER "Turn on to build with thread sanitizer." OFF)
+    install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thread_pool)
+    install(FILES ${PROJECT_BINARY_DIR}/include/thread_pool/version.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thread_pool
+    )
+endif()
 
 if(TP_BUILD_TESTS OR TP_BUILD_EXAMPLES OR TP_BUILD_BENCHMARKS)
     # see https://github.com/TheLartians/CPM.cmake for more info
