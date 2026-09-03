@@ -16,6 +16,20 @@
 
 auto multiply(int a, int b) { return a * b; }
 
+TEST_CASE("A pool with one thread runs many more tasks than it has threads") {
+    // Regression guard for the binary_semaphore over-release: enqueue_task() releases the
+    // per-worker signal once per task, so a busy worker accumulates far more than one permit.
+    std::atomic<int> counter = 0;
+    constexpr auto total_tasks = 64;
+    {
+        dp::thread_pool pool(1);
+        pool.enqueue_detach([] { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+        for (auto i = 0; i < total_tasks; i++) pool.enqueue_detach([&counter] { ++counter; });
+        pool.wait_for_tasks();
+    }
+    CHECK_EQ(counter.load(), total_tasks);
+}
+
 TEST_CASE("Multiply using global function") {
     dp::thread_pool pool{};
     auto result = pool.enqueue(multiply, 3, 4);

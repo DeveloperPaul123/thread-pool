@@ -69,8 +69,15 @@ namespace dp {
                                     std::invoke(std::move(task.value()));
                                     // the above task can push more work onto the pool, so we
                                     // only decrement the in flights once the task has been
-                                    // executed because now it's now longer "in flight"
-                                    in_flight_tasks_.fetch_sub(1, std::memory_order_release);
+                                    // executed because now it's now longer "in flight". Wake
+                                    // wait_for_tasks() only on the transition to zero: checking
+                                    // in_flight_tasks_ separately from this decrement (as a prior
+                                    // version did) races with enqueue_task()'s own read-then-set
+                                    // of the same counter.
+                                    if (in_flight_tasks_.fetch_sub(1, std::memory_order_acq_rel) ==
+                                        1) {
+                                        in_flight_tasks_.notify_all();
+                                    }
                                 }
 
                                 // try to steal a task
@@ -80,7 +87,10 @@ namespace dp {
                                         // steal a task
                                         unassigned_tasks_.fetch_sub(1, std::memory_order_release);
                                         std::invoke(std::move(task.value()));
-                                        in_flight_tasks_.fetch_sub(1, std::memory_order_release);
+                                        if (in_flight_tasks_.fetch_sub(
+                                                1, std::memory_order_acq_rel) == 1) {
+                                            in_flight_tasks_.notify_all();
+                                        }
                                         // stop stealing once we have invoked a stolen task
                                         break;
                                     }
@@ -90,12 +100,6 @@ namespace dp {
                             } while (unassigned_tasks_.load(std::memory_order_acquire) > 0);
 
                             priority_queue_.rotate_to_front(id);
-                            // check if all tasks are completed and release the "barrier"
-                            if (in_flight_tasks_.load(std::memory_order_acquire) == 0) {
-                                // in theory, only one thread will set this
-                                threads_complete_signal_.store(true, std::memory_order_release);
-                                threads_complete_signal_.notify_one();
-                            }
 
                         } while (!stop_tok.stop_requested());
                     });
@@ -237,10 +241,14 @@ namespace dp {
          * @details This function will block until all tasks have been completed.
          */
         void wait_for_tasks() {
-            // must be a while loop to ignore spurious wake-ups
-            while (in_flight_tasks_.load(std::memory_order_acquire) > 0) {
-                // wait for all tasks to finish
-                threads_complete_signal_.wait(false);
+            auto current = in_flight_tasks_.load(std::memory_order_acquire);
+            while (current > 0) {
+                // wait() blocks only while the value still equals `current`; a worker's
+                // fetch_sub() notifies exactly when the count transitions to zero (see the
+                // worker loop above), so there is no separate flag to fall out of sync with
+                // in_flight_tasks_ itself.
+                in_flight_tasks_.wait(current, std::memory_order_acquire);
+                current = in_flight_tasks_.load(std::memory_order_acquire);
             }
         }
 
@@ -275,12 +283,7 @@ namespace dp {
 
             // increment the unassigned tasks and in flight tasks
             unassigned_tasks_.fetch_add(1, std::memory_order_release);
-            const auto prev_in_flight = in_flight_tasks_.fetch_add(1, std::memory_order_release);
-
-            // reset the in flight signal if the list was previously empty
-            if (prev_in_flight == 0) {
-                threads_complete_signal_.store(false, std::memory_order_release);
-            }
+            in_flight_tasks_.fetch_add(1, std::memory_order_release);
 
             // assign work
             tasks_[i].tasks.push_back(std::forward<Function>(f));
@@ -289,7 +292,15 @@ namespace dp {
 
         struct task_item {
             dp::thread_safe_queue<FunctionType> tasks{};
-            std::binary_semaphore signal{0};
+            // A worker acquires this once per wake-up and then drains its entire queue, so
+            // enqueue_task() can release it many times before a matching acquire. It must
+            // therefore be a counting semaphore: releasing a binary_semaphore past its max()
+            // of 1 is a precondition violation (undefined behavior), and aborts under
+            // libstdc++ assertions, which are enabled automatically in unoptimized builds.
+            std::counting_semaphore<> signal{0};
+            static_assert(decltype(signal)::max() > 1,
+                          "task_item::signal must be a counting semaphore; enqueue_task() "
+                          "releases it once per task without a matching acquire.");
         };
 
         std::vector<ThreadType> threads_;
@@ -297,7 +308,6 @@ namespace dp {
         dp::thread_safe_queue<std::size_t> priority_queue_;
         // guarantee these get zero-initialized
         std::atomic_int_fast64_t unassigned_tasks_{0}, in_flight_tasks_{0};
-        std::atomic_bool threads_complete_signal_{false};
     };
 
     /**
